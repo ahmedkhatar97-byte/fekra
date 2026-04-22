@@ -9,42 +9,49 @@ st.set_page_config(
     layout="centered"
 )
 
-# 2. إضافة ستايل (التصحيح هنا)
+# 2. تحسين شكل الشات بـ CSS
 st.markdown("""
     <style>
     .stChatMessage {
         border-radius: 15px;
         margin-bottom: 10px;
     }
+    /* إخفاء القائمة العلوية لـ Streamlit لمظهر احترافي */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
     </style>
     """, unsafe_allow_html=True)
 
 st.title("💡 Fekra AI")
-st.caption("Powered by Free GPT-4 Engine")
+st.caption("Powered by Blackbox Engine (Free GPT-4o)")
 
-# 3. تهيئة سجل المحادثة
+# 3. تهيئة الذاكرة (Memory)
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# 4. عرض الرسائل
+# 4. عرض الرسائل السابقة
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# 5. منطقة الإدخال والرد
-if prompt := st.chat_input("بماذا تفكر؟"):
+# 5. منطقة الشات والرد
+if prompt := st.chat_input("بماذا تفكر يا هريف؟"):
+    # عرض رسالة المستخدم
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
+    # توليد رد الذكاء الاصطناعي
     with st.chat_message("assistant"):
         message_placeholder = st.empty()
         full_response = ""
         
         try:
             client = Client()
+            # استخدمنا هنا Blackbox لأنه أثبت كفاءة ومن غير طلبات معقدة
             response = client.chat.completions.create(
-                model=g4f.models.gpt_4o,
+                model="gpt-4o",
+                provider=g4f.Provider.Blackbox,
                 messages=[
                     {"role": m["role"], "content": m["content"]}
                     for m in st.session_state.messages
@@ -56,11 +63,25 @@ if prompt := st.chat_input("بماذا تفكر؟"):
                 if chunk.choices[0].delta.content:
                     content = chunk.choices[0].delta.content
                     full_response += content
+                    # علامة الـ cursor عشان يحسس المستخدم إنه بيكتب لايف
                     message_placeholder.markdown(full_response + "▌")
             
+            # عرض الرد النهائي وحفظه في الذاكرة
             message_placeholder.markdown(full_response)
             st.session_state.messages.append({"role": "assistant", "content": full_response})
             
         except Exception as e:
-            st.error(f"حدث خطأ: {str(e)}")
-            
+            # لو الـ Blackbox واجه مشكلة، جرب مزود احتياطي فوراً
+            st.error(f"حصل مشكلة بسيطة، جاري المحاولة مرة أخرى...")
+            try:
+                response = client.chat.completions.create(
+                    model="gpt-4o",
+                    provider=g4f.Provider.DarkAI, # مزود احتياطي
+                    messages=[{"role": "user", "content": prompt}]
+                )
+                full_response = response.choices[0].message.content
+                message_placeholder.markdown(full_response)
+                st.session_state.messages.append({"role": "assistant", "content": full_response})
+            except:
+                st.error("المزودين مشغولين حالياً، جرب كمان دقيقة.")
+                    
