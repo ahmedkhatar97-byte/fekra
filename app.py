@@ -80,5 +80,30 @@ st.markdown("""
     }
 
     /* مستطيل الكتابة */
-    [data-testid="stChatInput"] textarea
+    [data-testid="stChatInput"] textarea {
+        color: #000000 !important;
+        background-color: #FFFFFF !important;
+        caret-color: #000000 !important;
+    }
+    
+    p, span, div, label { color: #FFFFFF !important; font-weight: 500; }
+</style>
+
+<div id="splash-screen">
+    <div class="splash-logo">💡 FEKRA AI</div>
+    <p style="color: #808495 !important; margin-top: 20px;">Designed by Harreef</p>
+</div>
+""", unsafe_allow_html=True)
+
+# تحضير معلومات الوقت
+now = datetime.now()
+current_time_info = now.strftime("%A, %d %B %Y | %I:%M %p")
+
+st.title("💡 Fekra AI")
+st.markdown("<p style='text-align: center; color: #808495 !important;'>نسخة الحريف الشاملة | ذكاء بلا حدود</p>", unsafe_allow_html=True)
+
+# التحقق من الـ API Key
+try:
+    api_key = st.secrets["GROQ_API_KEY"]
+    client = Groq(api
     
