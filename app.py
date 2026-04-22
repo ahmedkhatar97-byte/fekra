@@ -24,7 +24,7 @@ def save_mem(name):
 if "user_name" not in st.session_state:
     st.session_state.user_name = load_mem()["user_name"]
 
-# 2. الستايل (إضافة الزر العايم وحل السكرول)
+# 2. الستايل (تعديل زر الصعود لأعلى)
 st.markdown("""
 <style>
     footer {visibility: hidden;}
@@ -51,7 +51,7 @@ st.markdown("""
         border: none !important;
     }
 
-    /* زرار التحكم العايم في الجنب */
+    /* زرار الصعود للأعلى النيون */
     .floating-control {
         position: fixed;
         right: 20px;
@@ -85,8 +85,8 @@ st.markdown("""
     p, span, div { color: #FFF !important; }
 </style>
 
-<div class="floating-control" onclick="window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });">
-    <span style="color: #0E1117; font-size: 24px; font-weight: bold;">↓</span>
+<div class="floating-control" onclick="window.scrollTo({ top: 0, behavior: 'smooth' });">
+    <span style="color: #0E1117; font-size: 24px; font-weight: bold;">↑</span>
 </div>
 
 <div id="splash">
@@ -100,55 +100,5 @@ now = datetime.now()
 current_time_info = now.strftime("%A, %d %B %Y | %I:%M %p")
 
 st.title("💡 Fekra AI")
-st.markdown("<p style='text-align: center; color: #808495 !important;'>نسخة الحريف | ذكاء بلا حدود</p>", unsafe_allow_html=True)
-
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-
-# عرض المحادثة
-for m in st.session_state.messages:
-    with st.chat_message(m["role"]):
-        st.markdown(m["content"])
-
-# إدخال المستخدم والرد
-if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.markdown(prompt)
-
-    with st.chat_message("assistant"):
-        try:
-            client = Groq(api_key=st.secrets["GROQ_API_KEY"])
-            
-            if any(x in prompt for x in ["اسمي", "ناديني"]):
-                new_n = prompt.split()[-1].strip("!؟.")
-                st.session_state.user_name = new_n
-                save_mem(new_n)
-
-            s_info = ""
-            if any(w in prompt.lower() for w in ["بحث", "اخبار", "سعر", "مين هو"]):
-                with DDGS() as ddgs:
-                    results = [r['body'] for r in ddgs.text(prompt, max_results=3)]
-                    s_info = "\n".join(results)
-
-            sys_p = f"""أنت Fekra AI، صممك أحمد وائل الحريف. 
-            تنادي المستخدم بـ: {st.session_state.user_name}. 
-            تحدث بلهجة مصرية واضحة، تجنب الرموز الغريبة. 
-            الوقت: {current_time_info}."""
-            
-            history = [{"role": "system", "content": sys_p}] + st.session_state.messages[:-1]
-            history.append({"role": "user", "content": f"{prompt}\n\n[Context]: {s_info}"})
-            
-            res = client.chat.completions.create(model="llama-3.3-70b-versatile", messages=history, stream=True)
-            
-            full_r = ""
-            p_holder = st.empty()
-            for chunk in res:
-                if chunk.choices[0].delta.content:
-                    full_r += chunk.choices[0].delta.content
-                    p_holder.markdown(full_r + "▌")
-            p_holder.markdown(full_r)
-            st.session_state.messages.append({"role": "assistant", "content": full_r})
-        except Exception as e:
-            st.error(f"Error: {e}")
+st.markdown("<p style='text-align: center; color: #808495 !important;'>نسخة الحريف | ذكاء بلا حدود</p
             
