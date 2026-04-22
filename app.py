@@ -11,52 +11,46 @@ st.set_page_config(
 # الستايل النهائي: إخفاء الإعلانات + ضبط الألوان + وضوح الكتابة
 st.markdown("""
     <style>
-    /* إخفاء شريط Streamlit السفلي (الإعلانات) والقائمة العلوية */
-    footer {visibility: hidden; height: 0%;}
-    header {visibility: hidden;}
-    #MainMenu {visibility: hidden;}
-    [data-testid="stStatusWidget"] {visibility: hidden;}
-
-    /* السيطرة على الخلفية ومنع أي مساحات بيضاء */
-    [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
-        background-color: #0E1117 !important;
+    /* 1. إخفاء الفوتر والإعلانات اللي تحت نهائياً */
+    footer {
+        display: none !important;
     }
     
-    /* جعل النصوص المرسلة واضحة جداً باللون الأبيض */
-    p, span, div, label {
-        color: #FFFFFF !important;
-        font-weight: 500;
+    /* 2. تحويل خلفية منطقة الإدخال بالكامل للأسود */
+    [data-testid="stChatInput"] {
+        background-color: transparent !important;
+        border: none !important;
+        padding: 0 !important;
     }
 
-    /* ستايل العنوان النيوني */
+    /* 3. تنسيق مستطيل الكتابة ليكون نيون واحترافي */
+    [data-testid="stChatInput"] textarea {
+        background-color: #161B22 !important; /* لون داكن شيك */
+        color: #FFFFFF !important; /* خط أبيض واضح */
+        border: 1px solid #00F2FF44 !important; /* حدود نيون خفيفة */
+        border-radius: 12px !important;
+        padding: 12px !important;
+    }
+
+    /* 4. السيطرة على الحاوية السفلية لمنع أي بياض */
+    div[data-testid="stChatInputContainer"] {
+        background-color: #0E1117 !important;
+        border: none !important;
+    }
+
+    /* 5. إخفاء أي هوامش بيضاء إضافية في الأسفل */
+    .main .block-container {
+        padding-bottom: 5rem !important;
+    }
+    
+    /* بقية ستايل العنوان والفقاعات */
     h1 {
         color: #00F2FF !important;
         text-shadow: 0px 0px 15px #00F2FF;
-        font-family: 'Segoe UI', sans-serif;
-        text-align: center;
-        margin-top: -50px;
-    }
-
-    /* تعديل فقاعات الدردشة */
-    .stChatMessage {
-        background-color: #161B22 !important;
-        border: 1px solid #00F2FF33 !important;
-        border-radius: 15px !important;
-    }
-
-    /* ضبط لون الكلام "أسود" أثناء الكتابة في المستطيل لزيادة الوضوح */
-    [data-testid="stChatInput"] textarea {
-        color: #000000 !important;
-        background-color: #FFFFFF !important;
-        caret-color: #000000 !important;
-    }
-    
-    /* تحسين زر الإرسال */
-    [data-testid="stChatInput"] button {
-        color: #00F2FF !important;
     }
     </style>
     """, unsafe_allow_html=True)
+
 
 st.title("💡 Fekra AI")
 st.markdown("<p style='text-align: center; color: #808495 !important;'>نسخة الحريف الشاملة | ذكاء بلا حدود</p>", unsafe_allow_html=True)
