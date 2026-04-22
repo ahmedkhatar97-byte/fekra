@@ -8,21 +8,21 @@ st.set_page_config(
     layout="centered"
 )
 
-# ستايل احترافي لمنع الحتت البيضا وتحسين الوضوح
+# ستايل احترافي لضبط لون الكتابة ومنع الحتت البيضا
 st.markdown("""
     <style>
-    /* 1. السيطرة على الخلفية بالكامل ومنع أي مساحات بيضا */
+    /* السيطرة على الخلفية ومنع المساحات البيضا */
     [data-testid="stAppViewContainer"], [data-testid="stHeader"], [data-testid="stSidebar"] {
         background-color: #0E1117 !important;
     }
     
-    /* 2. جعل النصوص واضحة جداً باللون الأبيض النقي */
+    /* جعل النصوص المرسلة واضحة جداً باللون الأبيض */
     p, span, div, label {
         color: #FFFFFF !important;
         font-weight: 500;
     }
 
-    /* 3. ستايل العنوان النيوني مع تحسين الظل */
+    /* ستايل العنوان النيوني */
     h1 {
         color: #00F2FF !important;
         text-shadow: 0px 0px 15px #00F2FF;
@@ -30,29 +30,23 @@ st.markdown("""
         text-align: center;
     }
 
-    /* 4. تعديل فقاعات الدردشة لتكون مريحة للعين ومعتمة */
+    /* تعديل فقاعات الدردشة */
     .stChatMessage {
         background-color: #161B22 !important;
         border: 1px solid #00F2FF33 !important;
         border-radius: 15px !important;
     }
 
-    /* 5. تلوين منطقة الإدخال بالكامل لتختفي الحتت البيضا */
-    [data-testid="stChatInput"] {
-        background-color: #161B22 !important;
-        border: 1px solid #00F2FF !important;
+    /* 🔥 التعديل المطلوب: جعل لون الكلام أسود أثناء الكتابة لزيادة الوضوح */
+    [data-testid="stChatInput"] textarea {
+        color: #000000 !important; /* لون الخط أسود */
+        background-color: #FFFFFF !important; /* خلفية بيضاء خفيفة لمنطقة الكتابة لزيادة التباين */
+        caret-color: #000000 !important; /* لون المؤشر أسود */
     }
     
-    textarea {
-        color: #FFFFFF !important;
-    }
-
-    /* 6. تحسين شكل الأيقونات والأسماء */
-    [data-testid="stChatMessageAvatarUser"] {
-        background-color: #FF4B4B !important;
-    }
-    [data-testid="stChatMessageAvatarAssistant"] {
-        background-color: #00F2FF !important;
+    /* تحسين شكل زر الإرسال */
+    [data-testid="stChatInput"] button {
+        color: #00F2FF !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -75,8 +69,7 @@ if "messages" not in st.session_state:
 
 system_identity = """
 أنت فكرة AI (Fekra AI)، مساعد ذكي طوره أحمد وائل الحريف.
-ردودك يجب أن تكون ذكية، سريعة، وبأسلوب عصري.
-(طبق كل القواعد السابقة بخصوص الهوية والتخصصات الـ 10).
+ردودك يجب أن تكون ذكية وسريعة (طبق قواعد الهوية السابقة).
 """
 
 # 4. عرض الرسائل
@@ -100,6 +93,7 @@ if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
                 for m in st.session_state.messages
             ]
 
+            # الموديل المستقر
             completion = client.chat.completions.create(
                 model="llama-3.3-70b-versatile", 
                 messages=messages_to_send,
