@@ -1,12 +1,30 @@
-
 import streamlit as st
 from groq import Groq
 from datetime import datetime
+import json
+import os
+from duckduckgo_search import DDGS
 
 # 1. إعدادات الصفحة
 st.set_page_config(page_title="Fekra AI", page_icon="💡", layout="centered")
 
-# 2. الستايل القاتل للبياض (استهداف شامل)
+# --- نظام الذاكرة الآمن ---
+def load_mem():
+    if os.path.exists("memory.json"):
+        try:
+            with open("memory.json", "r", encoding="utf-8") as f:
+                return json.load(f)
+        except: pass
+    return {"user_name": "يا حريف"}
+
+def save_mem(name):
+    with open("memory.json", "w", encoding="utf-8") as f:
+        json.dump({"user_name": name}, f, ensure_ascii=False)
+
+if "user_name" not in st.session_state:
+    st.session_state.user_name = load_mem()["user_name"]
+
+# 2. الستايل (نفس استايلك مع حل مشكلة السكرول والرموز)
 st.markdown("""
 <style>
     /* إخفاء إضافات ستريم ليت */
@@ -14,9 +32,15 @@ st.markdown("""
     header {visibility: hidden;}
     #MainMenu {visibility: hidden;}
 
-    /* توحيد السواد في كل مكان */
-    .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"], [data-testid="stBottom"] {
+    /* توحيد السواد ومنع الـ Pull-to-refresh */
+    html, body, [data-testid="stAppViewContainer"] {
         background-color: #0E1117 !important;
+        overscroll-behavior-y: none !important;
+    }
+
+    /* جعل الشات قابل للسكرول بحرية دون عمل ريستارت */
+    [data-testid="stMainViewContainer"] {
+        overflow-y: auto !important;
     }
 
     /* نسف السطر الأبيض تماماً */
@@ -26,7 +50,6 @@ st.markdown("""
         padding: 15px !important;
     }
     
-    /* ضمان سواد الحاوية السفلية */
     [data-testid="stBottomBlockContainer"] {
         background-color: #0E1117 !important;
         border: none !important;
@@ -41,10 +64,12 @@ st.markdown("""
     }
     @keyframes out { 0%, 80% {opacity: 1;} 100% {opacity: 0; visibility: hidden;} }
     
-    /* ستايل الشات */
+    /* ستايل الشات النيون */
     h1 { color: #00F2FF !important; text-shadow: 0 0 15px #00F2FF; text-align: center; }
     .stChatMessage { background: #161B22 !important; border: 1px solid #00F2FF33 !important; border-radius: 15px !important; }
-    [data-testid="stChatInput"] textarea { color: #000 !important; background: #FFF !important; }
+    
+    /* تصحيح ألوان المدخلات لمنع الرموز الغريبة */
+    [data-testid="stChatInput"] textarea { color: #FFFFFF !important; background: #161B22 !important; }
     p, span, div { color: #FFF !important; }
 </style>
 <div id="splash">
@@ -53,7 +78,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# 3. المنطق البرمجي والوقت
+# 3. المنطق البرمجي
 now = datetime.now()
 current_time_info = now.strftime("%A, %d %B %Y | %I:%M %p")
 
@@ -76,23 +101,39 @@ if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
 
     with st.chat_message("assistant"):
         try:
-            api_key = st.secrets["GROQ_API_KEY"]
-            client = Groq(api_key=api_key)
+            client = Groq(api_key=st.secrets["GROQ_API_KEY"])
             
-            history = [{"role": "system", "content": f"أنت Fekra AI، صممك أحمد وائل الحريف. الوقت: {current_time_info}."}]
-            for msg in st.session_state.messages:
-                history.append({"role": msg["role"], "content": msg["content"]})
+            # --- الذاكرة والبحث التلقائي ---
+            if any(x in prompt for x in ["اسمي", "ناديني"]):
+                new_n = prompt.split()[-1].strip("!؟.")
+                st.session_state.user_name = new_n
+                save_mem(new_n)
+
+            s_info = ""
+            if any(w in prompt.lower() for w in ["بحث", "اخبار", "سعر", "مين هو"]):
+                with DDGS() as ddgs:
+                    results = [r['body'] for r in ddgs.text(prompt, max_results=3)]
+                    s_info = "\n".join(results)
+
+            # تحصين الموديل من الأخطاء الاملائية والرموز
+            sys_p = f"""أنت Fekra AI، صممك أحمد وائل الحريف. 
+            تنادي المستخدم بـ: {st.session_state.user_name}. 
+            تحدث بلهجة مصرية واضحة، تجنب الرموز الغريبة أو الحروف غير المفهومة. 
+            الوقت: {current_time_info}."""
+            
+            history = [{"role": "system", "content": sys_p}] + st.session_state.messages[:-1]
+            history.append({"role": "user", "content": f"{prompt}\n\n[Context]: {s_info}"})
             
             res = client.chat.completions.create(model="llama-3.3-70b-versatile", messages=history, stream=True)
             
-            full_res = ""
-            placeholder = st.empty()
+            full_r = ""
+            p_holder = st.empty()
             for chunk in res:
                 if chunk.choices[0].delta.content:
-                    full_res += chunk.choices[0].delta.content
-                    placeholder.markdown(full_res + "▌")
-            placeholder.markdown(full_res)
-            st.session_state.messages.append({"role": "assistant", "content": full_res})
+                    full_r += chunk.choices[0].delta.content
+                    p_holder.markdown(full_r + "▌")
+            p_holder.markdown(full_r)
+            st.session_state.messages.append({"role": "assistant", "content": full_r})
         except Exception as e:
             st.error(f"Error: {e}")
-            
+                    
