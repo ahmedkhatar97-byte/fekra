@@ -24,68 +24,68 @@ def save_mem(name):
 if "user_name" not in st.session_state:
     st.session_state.user_name = load_mem()["user_name"]
 
-# 2. الستايل (حل نهائي للسكرول والـ Restart)
+# 2. الستايل (حل السكرول والـ Restart وإخفاء علامة التحميل)
 st.markdown("""
 <style>
     footer {visibility: hidden;}
     header {visibility: hidden;}
     #MainMenu {visibility: hidden;}
     
-    /* سواد تام وتثبيت الشات */
-    .stApp, [data-testid="stAppViewContainer"], [data-testid="stBottom"] {
+    /* منع الـ Pull-to-Refresh والـ Restart */
+    html, body, [data-testid="stAppViewContainer"] {
+        overflow: hidden;
+        overscroll-behavior-y: none !important;
+    }
+
+    /* جعل منطقة الشات هي الوحيدة القابلة للسكرول بحرية */
+    [data-testid="stMainViewContainer"] {
+        overflow-y: auto !important;
         background-color: #0E1117 !important;
     }
 
-    /* منع الـ Restart عند السكرول في الموبايل */
-    .main { overflow: auto !important; }
+    /* إخفاء علامة التحميل المزعجة (Spinner) */
+    [data-testid="stStatusWidget"] {
+        display: none !important;
+    }
 
-    div[data-testid="stChatInputContainer"] {
+    /* تثبيت شريط الكتابة */
+    div[data-testid="stBottom"] {
         background-color: #0E1117 !important;
         border: none !important;
-        padding: 15px !important;
-    }
-    
-    [data-testid="stBottomBlockContainer"] {
-        background-color: #0E1117 !important;
-        border: none !important;
     }
 
-    /* شاشة الدخول */
+    /* شاشة الدخول النيون */
     #splash {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background: #0E1117; display: flex; flex-direction: column;
         justify-content: center; align-items: center; z-index: 9999;
-        animation: out 2.5s forwards; pointer-events: none;
+        animation: out 2.2s forwards; pointer-events: none;
     }
     @keyframes out { 0%, 80% {opacity: 1;} 100% {opacity: 0; visibility: hidden;} }
     
     h1 { color: #00F2FF !important; text-shadow: 0 0 15px #00F2FF; text-align: center; }
-    .stChatMessage { background: #161B22 !important; border: 1px solid #00F2FF33 !important; border-radius: 15px !important; }
-    [data-testid="stChatInput"] textarea { color: #000 !important; background: #FFF !important; }
-    p, span, div { color: #FFF !important; }
+    .stChatMessage { background: #161B22 !important; border: 1px solid #00F2FF22 !important; border-radius: 15px !important; }
+    [data-testid="stChatInput"] textarea { color: #FFFFFF !important; background: transparent !important; }
 </style>
 <div id="splash">
     <div style="font-size: 50px; color: #00F2FF; text-shadow: 0 0 20px #00F2FF;">💡 FEKRA AI</div>
-    <p style="color: #808495 !important; margin-top: 20px;">Designed by Harreef</p>
+    <p style="color: #808495 !important; margin-top: 10px;">Designed by Harreef</p>
 </div>
 """, unsafe_allow_html=True)
 
 # 3. المنطق البرمجي
-now = datetime.now()
-current_time_info = now.strftime("%A, %d %B %Y | %I:%M %p")
-
 st.title("💡 Fekra AI")
 st.markdown("<p style='text-align: center; color: #808495 !important;'>نسخة الحريف | ذكاء بلا حدود</p>", unsafe_allow_html=True)
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# عرض المحادثة
+# عرض الرسائل
 for m in st.session_state.messages:
     with st.chat_message(m["role"]):
         st.markdown(m["content"])
 
-# إدخال المستخدم والرد
+# الإدخال
 if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
@@ -95,32 +95,33 @@ if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
         try:
             client = Groq(api_key=st.secrets["GROQ_API_KEY"])
             
-            # --- الذاكرة والبحث ---
+            # الذاكرة
             if any(x in prompt for x in ["اسمي", "ناديني"]):
-                name = prompt.split()[-1].strip("!؟.")
-                st.session_state.user_name = name
-                save_mem(name)
+                new_n = prompt.split()[-1].strip("!؟.")
+                st.session_state.user_name = new_n
+                save_mem(new_n)
 
-            search_info = ""
-            if any(w in prompt.lower() for w in ["بحث", "اخبار", "مين هو", "سعر"]):
+            # البحث (بدون إظهار علامة التحميل)
+            s_info = ""
+            if any(w in prompt.lower() for w in ["بحث", "اخبار", "سعر", "مين هو"]):
                 with DDGS() as ddgs:
-                    res_list = [r['body'] for r in ddgs.text(prompt, max_results=3)]
-                    search_info = "\n".join(res_list)
+                    results = [r['body'] for r in ddgs.text(prompt, max_results=3)]
+                    s_info = "\n".join(results)
 
-            sys_msg = f"أنت Fekra AI، صممك أحمد وائل الحريف. تنادي المستخدم بـ: {st.session_state.user_name}. الوقت: {current_time_info}. رد بالمصرية."
-            history = [{"role": "system", "content": sys_msg}] + st.session_state.messages[:-1]
-            history.append({"role": "user", "content": f"{prompt}\n\n[Search Results]: {search_info}"})
-            
+            sys_p = f"أنت Fekra AI، صممك أحمد وائل الحريف. نادِ المستخدم بـ: {st.session_state.user_name}. رد بالمصرية."
+            history = [{"role": "system", "content": sys_p}] + st.session_state.messages[:-1]
+            history.append({"role": "user", "content": f"{prompt}\n\n[Context]: {s_info}"})
+
             res = client.chat.completions.create(model="llama-3.3-70b-versatile", messages=history, stream=True)
             
-            full_res = ""
-            placeholder = st.empty()
+            full_r = ""
+            p_holder = st.empty()
             for chunk in res:
                 if chunk.choices[0].delta.content:
-                    full_res += chunk.choices[0].delta.content
-                    placeholder.markdown(full_res + "▌")
-            placeholder.markdown(full_res)
-            st.session_state.messages.append({"role": "assistant", "content": full_res})
+                    full_r += chunk.choices[0].delta.content
+                    p_holder.markdown(full_r + "▌")
+            p_holder.markdown(full_r)
+            st.session_state.messages.append({"role": "assistant", "content": full_r})
         except Exception as e:
             st.error(f"Error: {e}")
             
