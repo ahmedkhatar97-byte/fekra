@@ -2,14 +2,14 @@ import streamlit as st
 from groq import Groq
 from datetime import datetime
 
-# 1. إعدادات الصفحة والستايل المتكامل (النسخة النهائية)
+# 1. إعدادات الصفحة والستايل المتكامل (UI Dark Neon)
 st.set_page_config(
     page_title="Fekra AI",
     page_icon="💡",
     layout="centered"
 )
 
-# ستايل احترافي: إخفاء الإعلانات + ضبط منطقة الكتابة لتكون سوداء بالكامل
+# ستايل احترافي: إخفاء الإعلانات + فقاعات نيون + منطقة كتابة سودة
 st.markdown("""
     <style>
     /* إخفاء إعلانات Streamlit والفوتر */
@@ -17,7 +17,7 @@ st.markdown("""
     header {display: none !important;}
     #MainMenu {visibility: hidden;}
 
-    /* ضبط الخلفية الداكنة */
+    /* ضبط الخلفية الداكنة للتطبيق بالكامل */
     [data-testid="stAppViewContainer"] {
         background-color: #0E1117 !important;
     }
@@ -29,7 +29,29 @@ st.markdown("""
         text-align: center;
     }
 
-    /* ضبط منطقة الكتابة: إخفاء المستطيل الأبيض وجعلها سودة شيك */
+    /* 🔥 تنسيق فقاعات الكلام لتكون بأسلوب النيون */
+    [data-testid="stChatMessage"] {
+        background-color: #161B22 !important; /* لون داكن للفقاعة */
+        border: 1px solid #00F2FF33 !important; /* حدود نيون خفيفة جداً */
+        border-radius: 15px !important;
+        margin-bottom: 10px !important;
+        padding: 15px !important;
+    }
+
+    /* تمييز فقاعة المساعد بظل نيون خفيف */
+    [data-testid="stChatMessageAssistant"] {
+        border: 1px solid #00F2FF66 !important;
+        box-shadow: 0px 0px 10px #00F2FF11;
+    }
+
+    /* جعل النصوص واضحة جداً داخل الفقاعات */
+    [data-testid="stChatMessage"] p, [data-testid="stChatMessage"] span {
+        color: #FFFFFF !important;
+        font-size: 16px !important;
+        line-height: 1.6 !important;
+    }
+
+    /* ضبط منطقة الكتابة */
     [data-testid="stChatInput"] {
         background-color: transparent !important;
     }
@@ -38,11 +60,6 @@ st.markdown("""
         color: #FFFFFF !important;
         border: 1px solid #00F2FF44 !important;
         border-radius: 12px !important;
-    }
-    
-    /* جعل النصوص واضحة */
-    p, span, div {
-        color: #FFFFFF !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -63,15 +80,15 @@ except Exception:
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# 3. دستور الموديل (الاسم والتاريخ)
+# 3. دستور الموديل
 system_identity = f"""
 أنت فكرة AI (Fekra AI)، المساعد الذكي الذي طوره أحمد وائل الحريف.
 اسمك هو "Fekra AI".
-التاريخ والوقت الحالي هو: {current_time_info}.
-أجب بدقة إذا سألك المستخدم عن الوقت أو التاريخ أو اسمك.
+الوقت والتاريخ الحالي: {current_time_info}.
+أجب بذكاء وسرعة وبأسلوب يليق بواجهتك العصرية.
 """
 
-# 4. عرض الرسائل
+# 4. عرض الرسائل بالستايل الجديد
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
