@@ -1,55 +1,53 @@
 import streamlit as st
 from groq import Groq
-from datetime import datetime # لإدراك الوقت والتاريخ
+from datetime import datetime
 
-# 1. إعدادات الصفحة والستايل المتكامل (النسخة النهائية النظيفة)
+# 1. إعدادات الصفحة والستايل المتكامل (النسخة النهائية)
 st.set_page_config(
     page_title="Fekra AI",
     page_icon="💡",
     layout="centered"
 )
 
-st.markdown("""
+# ستايل احترافي: إخفاء الإعلانات + ضبط منطقة الكتابة لتكون سوداء بالكامل
 st.markdown("""
     <style>
-    /* 1. إخفاء الفوتر تماماً بكل عناصره */
-    footer {
-        display: none !important;
-    }
-    
-    /* 2. إخفاء شريط الأدوات السفلي وعلامة Streamlit */
-    [data-testid="stFooterBlock"] {
-        display: none !important;
-    }
-    
-    /* 3. إخفاء القائمة العلوية والشريط الأسود اللي فوق */
-    header {
-        display: none !important;
-    }
-    
-    #MainMenu {
-        display: none !important;
-    }
+    /* إخفاء إعلانات Streamlit والفوتر */
+    footer {display: none !important;}
+    header {display: none !important;}
+    #MainMenu {visibility: hidden;}
 
-    /* 4. مسح أي مساحة بيضاء كانت مخصصة للإعلانات */
-    .stApp {
-        bottom: 0 !important;
-    }
-
-    /* بقية الستايل بتاعك */
+    /* ضبط الخلفية الداكنة */
     [data-testid="stAppViewContainer"] {
         background-color: #0E1117 !important;
     }
-    
-    /* ضبط لون الكتابة في المستطيل قبل الإرسال */
+
+    /* العنوان النيوني */
+    h1 {
+        color: #00F2FF !important;
+        text-shadow: 0px 0px 15px #00F2FF;
+        text-align: center;
+    }
+
+    /* ضبط منطقة الكتابة: إخفاء المستطيل الأبيض وجعلها سودة شيك */
+    [data-testid="stChatInput"] {
+        background-color: transparent !important;
+    }
     [data-testid="stChatInput"] textarea {
-        color: #000000 !important;
-        background-color: #FFFFFF !important;
+        background-color: #161B22 !important;
+        color: #FFFFFF !important;
+        border: 1px solid #00F2FF44 !important;
+        border-radius: 12px !important;
+    }
+    
+    /* جعل النصوص واضحة */
+    p, span, div {
+        color: #FFFFFF !important;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# معرفة الوقت والتاريخ الحالي لإرساله للموديل
+# معرفة الوقت والتاريخ الحالي
 now = datetime.now()
 current_time_info = now.strftime("%A, %d %B %Y | %I:%M %p")
 
@@ -58,29 +56,27 @@ st.title("💡 Fekra AI")
 # 2. إعداد الـ API
 try:
     client = Groq(api_key=st.secrets["GROQ_API_KEY"])
-except:
-    st.error("تأكد من إضافة المفتاح في Secrets!")
+except Exception:
+    st.error("تأكد من إضافة GROQ_API_KEY في Secrets!")
     st.stop()
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# 3. 🔥 الدستور المحدث (الاسم + التاريخ الحقيقي)
+# 3. دستور الموديل (الاسم والتاريخ)
 system_identity = f"""
-أنت فكرة AI (Fekra AI)، المساعد الذكي المبتكر الذي طوره أحمد وائل الحريف.
-
-قواعد صارمة:
-1. إذا سألك المستخدم عن اسمك، يجب أن تجيب بـ "Fekra AI" بوضوح.
-2. أنت الآن تدرك الوقت والتاريخ تماماً. التاريخ والوقت الحالي هو: {current_time_info}.
-3. إذا سألك المستخدم "النهاردة يوم إيه؟" أو "التاريخ كام؟"، جاوب بناءً على المعلومة المذكورة أعلاه.
-4. التزم بأسلوبك الذكي والسريع في المجالات الـ 10 التي حددناها سابقاً.
+أنت فكرة AI (Fekra AI)، المساعد الذكي الذي طوره أحمد وائل الحريف.
+اسمك هو "Fekra AI".
+التاريخ والوقت الحالي هو: {current_time_info}.
+أجب بدقة إذا سألك المستخدم عن الوقت أو التاريخ أو اسمك.
 """
 
-# 4. عرض الرسائل والرد
+# 4. عرض الرسائل
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
+# 5. منطقة الإدخال
 if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
