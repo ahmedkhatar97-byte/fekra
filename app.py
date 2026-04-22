@@ -5,7 +5,6 @@ st.set_page_config(page_title="Fekra AI", page_icon="💡")
 
 st.title("💡 Fekra AI")
 
-# جلب المفتاح
 try:
     GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
 except:
@@ -31,9 +30,9 @@ if prompt := st.chat_input("بماذا تفكر يا هريف؟"):
         full_response = ""
         
         try:
-            # تم تحديث الموديل لـ Llama 3.1 الجديد
+            # الموديل ده "الجوكر" بتاع Groq وموجود دايماً
             completion = client.chat.completions.create(
-                model="llama-3.1-70b-versatile", 
+                model="llama3-8b-8192", 
                 messages=[{"role": m["role"], "content": m["content"]} for m in st.session_state.messages],
                 stream=True,
             )
