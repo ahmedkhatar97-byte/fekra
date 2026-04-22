@@ -24,26 +24,22 @@ def save_mem(name):
 if "user_name" not in st.session_state:
     st.session_state.user_name = load_mem()["user_name"]
 
-# 2. الستايل (نفس استايلك مع حل مشكلة السكرول والرموز)
+# 2. الستايل (إضافة الزر العايم وحل السكرول)
 st.markdown("""
 <style>
-    /* إخفاء إضافات ستريم ليت */
     footer {visibility: hidden;}
     header {visibility: hidden;}
     #MainMenu {visibility: hidden;}
 
-    /* توحيد السواد ومنع الـ Pull-to-refresh */
     html, body, [data-testid="stAppViewContainer"] {
         background-color: #0E1117 !important;
         overscroll-behavior-y: none !important;
     }
 
-    /* جعل الشات قابل للسكرول بحرية دون عمل ريستارت */
     [data-testid="stMainViewContainer"] {
         overflow-y: auto !important;
     }
 
-    /* نسف السطر الأبيض تماماً */
     div[data-testid="stChatInputContainer"] {
         background-color: #0E1117 !important;
         border: none !important;
@@ -55,7 +51,25 @@ st.markdown("""
         border: none !important;
     }
 
-    /* شاشة الدخول */
+    /* زرار التحكم العايم في الجنب */
+    .floating-control {
+        position: fixed;
+        right: 20px;
+        bottom: 100px;
+        width: 50px;
+        height: 50px;
+        background: #00F2FF;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        box-shadow: 0 0 15px #00F2FF;
+        cursor: pointer;
+        z-index: 10000;
+        transition: 0.3s;
+    }
+    .floating-control:hover { transform: scale(1.1); }
+
     #splash {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background: #0E1117; display: flex; flex-direction: column;
@@ -64,14 +78,17 @@ st.markdown("""
     }
     @keyframes out { 0%, 80% {opacity: 1;} 100% {opacity: 0; visibility: hidden;} }
     
-    /* ستايل الشات النيون */
     h1 { color: #00F2FF !important; text-shadow: 0 0 15px #00F2FF; text-align: center; }
     .stChatMessage { background: #161B22 !important; border: 1px solid #00F2FF33 !important; border-radius: 15px !important; }
     
-    /* تصحيح ألوان المدخلات لمنع الرموز الغريبة */
     [data-testid="stChatInput"] textarea { color: #FFFFFF !important; background: #161B22 !important; }
     p, span, div { color: #FFF !important; }
 </style>
+
+<div class="floating-control" onclick="window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });">
+    <span style="color: #0E1117; font-size: 24px; font-weight: bold;">↓</span>
+</div>
+
 <div id="splash">
     <div style="font-size: 50px; color: #00F2FF; text-shadow: 0 0 20px #00F2FF;">💡 FEKRA AI</div>
     <p style="color: #808495 !important; margin-top: 20px;">Designed by Harreef</p>
@@ -103,7 +120,6 @@ if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
         try:
             client = Groq(api_key=st.secrets["GROQ_API_KEY"])
             
-            # --- الذاكرة والبحث التلقائي ---
             if any(x in prompt for x in ["اسمي", "ناديني"]):
                 new_n = prompt.split()[-1].strip("!؟.")
                 st.session_state.user_name = new_n
@@ -115,10 +131,9 @@ if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
                     results = [r['body'] for r in ddgs.text(prompt, max_results=3)]
                     s_info = "\n".join(results)
 
-            # تحصين الموديل من الأخطاء الاملائية والرموز
             sys_p = f"""أنت Fekra AI، صممك أحمد وائل الحريف. 
             تنادي المستخدم بـ: {st.session_state.user_name}. 
-            تحدث بلهجة مصرية واضحة، تجنب الرموز الغريبة أو الحروف غير المفهومة. 
+            تحدث بلهجة مصرية واضحة، تجنب الرموز الغريبة. 
             الوقت: {current_time_info}."""
             
             history = [{"role": "system", "content": sys_p}] + st.session_state.messages[:-1]
@@ -136,4 +151,4 @@ if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
             st.session_state.messages.append({"role": "assistant", "content": full_r})
         except Exception as e:
             st.error(f"Error: {e}")
-                    
+            
