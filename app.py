@@ -5,30 +5,34 @@ from datetime import datetime
 # 1. إعدادات الصفحة
 st.set_page_config(page_title="Fekra AI", page_icon="💡", layout="centered")
 
-# 2. الستايل القاتل للبياض (استهداف شامل)
+# 2. الستايل (نسف البياض + تحويل الفقاعة للسواد النيون)
 st.markdown("""
 <style>
-    /* إخفاء إضافات ستريم ليت */
     footer {visibility: hidden;}
     header {visibility: hidden;}
-    #MainMenu {visibility: hidden;}
-
-    /* توحيد السواد في كل مكان */
-    .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"], [data-testid="stBottom"] {
+    
+    /* توحيد الخلفية السوداء */
+    .stApp, [data-testid="stAppViewContainer"], [data-testid="stBottom"] {
         background-color: #0E1117 !important;
     }
 
-    /* نسف السطر الأبيض تماماً */
+    /* تحويل فقاعة الكتابة للسواد مع إطار نيون */
     div[data-testid="stChatInputContainer"] {
         background-color: #0E1117 !important;
-        border: none !important;
-        padding: 15px !important;
+        border-top: 1px solid #00F2FF22 !important;
     }
-    
-    /* ضمان سواد الحاوية السفلية */
-    [data-testid="stBottomBlockContainer"] {
-        background-color: #0E1117 !important;
-        border: none !important;
+
+    [data-testid="stChatInput"] {
+        background-color: #161B22 !important;
+        border: 1px solid #00F2FF44 !important;
+        border-radius: 10px !important;
+    }
+
+    /* تغيير لون نص الكتابة للأبيض داخل الفقاعة السوداء */
+    [data-testid="stChatInput"] textarea {
+        color: #FFFFFF !important;
+        background-color: #161B22 !important;
+        caret-color: #00F2FF !important;
     }
 
     /* شاشة الدخول */
@@ -40,10 +44,9 @@ st.markdown("""
     }
     @keyframes out { 0%, 80% {opacity: 1;} 100% {opacity: 0; visibility: hidden;} }
     
-    /* ستايل الشات */
+    /* ستايل الرسايل */
     h1 { color: #00F2FF !important; text-shadow: 0 0 15px #00F2FF; text-align: center; }
     .stChatMessage { background: #161B22 !important; border: 1px solid #00F2FF33 !important; border-radius: 15px !important; }
-    [data-testid="stChatInput"] textarea { color: #000 !important; background: #FFF !important; }
     p, span, div { color: #FFF !important; }
 </style>
 <div id="splash">
@@ -52,7 +55,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# 3. المنطق البرمجي والوقت
+# 3. المنطق والوقت
 now = datetime.now()
 current_time_info = now.strftime("%A, %d %B %Y | %I:%M %p")
 
@@ -62,12 +65,10 @@ st.markdown("<p style='text-align: center; color: #808495 !important;'>نسخة 
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# عرض المحادثة
 for m in st.session_state.messages:
     with st.chat_message(m["role"]):
         st.markdown(m["content"])
 
-# إدخال المستخدم والرد
 if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
@@ -77,10 +78,7 @@ if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
         try:
             api_key = st.secrets["GROQ_API_KEY"]
             client = Groq(api_key=api_key)
-            
-            history = [{"role": "system", "content": f"أنت Fekra AI، صممك أحمد وائل الحريف. الوقت: {current_time_info}."}]
-            for msg in st.session_state.messages:
-                history.append({"role": msg["role"], "content": msg["content"]})
+            history = [{"role": "system", "content": f"أنت Fekra AI، صممك أحمد وائل الحريف. الوقت: {current_time_info}."}] + st.session_state.messages
             
             res = client.chat.completions.create(model="llama-3.3-70b-versatile", messages=history, stream=True)
             
