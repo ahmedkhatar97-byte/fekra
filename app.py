@@ -1,59 +1,70 @@
 import streamlit as st
 from groq import Groq
 
-# 1. إعدادات الصفحة وواجهة المستخدم (UI Customization)
+# 1. إعدادات الصفحة والستايل المتكامل (UI Dark Neon)
 st.set_page_config(
     page_title="Fekra AI",
     page_icon="💡",
     layout="centered"
 )
 
-# ستايل احترافي عشان الواجهة تليق على اللوجو
+# ستايل احترافي لمنع الحتت البيضا وتحسين الوضوح
 st.markdown("""
     <style>
-    /* تغيير لون الخلفية الأساسية */
-    .stApp {
-        background-color: #0E1117;
+    /* 1. السيطرة على الخلفية بالكامل ومنع أي مساحات بيضا */
+    [data-testid="stAppViewContainer"], [data-testid="stHeader"], [data-testid="stSidebar"] {
+        background-color: #0E1117 !important;
     }
     
-    /* ستايل لعنوان الصفحة */
+    /* 2. جعل النصوص واضحة جداً باللون الأبيض النقي */
+    p, span, div, label {
+        color: #FFFFFF !important;
+        font-weight: 500;
+    }
+
+    /* 3. ستايل العنوان النيوني مع تحسين الظل */
     h1 {
-        color: #00F2FF; /* لون نيوني زي اللوجو */
-        text-shadow: 0px 0px 10px #00F2FF;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        color: #00F2FF !important;
+        text-shadow: 0px 0px 15px #00F2FF;
+        font-family: 'Segoe UI', sans-serif;
+        text-align: center;
     }
 
-    /* ستايل فقاعات الدردشة */
+    /* 4. تعديل فقاعات الدردشة لتكون مريحة للعين ومعتمة */
     .stChatMessage {
-        background-color: #1A1C24;
-        border: 1px solid #00F2FF33;
-        border-radius: 20px;
-        color: white;
+        background-color: #161B22 !important;
+        border: 1px solid #00F2FF33 !important;
+        border-radius: 15px !important;
     }
 
-    /* ستايل منطقة الإدخال */
-    .stChatInputContainer {
-        padding-bottom: 20px;
+    /* 5. تلوين منطقة الإدخال بالكامل لتختفي الحتت البيضا */
+    [data-testid="stChatInput"] {
+        background-color: #161B22 !important;
+        border: 1px solid #00F2FF !important;
     }
     
-    /* تحسين شكل النصوص المساعدة */
-    .stCaption {
-        color: #808495;
+    textarea {
+        color: #FFFFFF !important;
+    }
+
+    /* 6. تحسين شكل الأيقونات والأسماء */
+    [data-testid="stChatMessageAvatarUser"] {
+        background-color: #FF4B4B !important;
+    }
+    [data-testid="stChatMessageAvatarAssistant"] {
+        background-color: #00F2FF !important;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# عرض اللوجو في نص الصفحة (اختياري لو عايز ترفعه على GitHub وتحط اللينك)
-# st.image("path_to_your_logo.png", width=100)
-
 st.title("💡 Fekra AI")
-st.caption("نسخة الحريف الشاملة | المستقبل يبدأ هنا")
+st.markdown("<p style='text-align: center; color: #808495 !important;'>نسخة الحريف الشاملة | المستقبل يبدأ هنا</p>", unsafe_allow_html=True)
 
 # 2. جلب مفتاح الـ API
 try:
     GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
 except:
-    st.error("تأكد من إضافة GROQ_API_KEY!")
+    st.error("تأكد من إضافة GROQ_API_KEY في Secrets!")
     st.stop()
 
 client = Groq(api_key=GROQ_API_KEY)
@@ -64,7 +75,7 @@ if "messages" not in st.session_state:
 
 system_identity = """
 أنت فكرة AI (Fekra AI)، مساعد ذكي طوره أحمد وائل الحريف.
-ردودك يجب أن تكون ذكية، سريعة، وبأسلوب عصري يليق بواجهتك النيونية.
+ردودك يجب أن تكون ذكية، سريعة، وبأسلوب عصري.
 (طبق كل القواعد السابقة بخصوص الهوية والتخصصات الـ 10).
 """
 
