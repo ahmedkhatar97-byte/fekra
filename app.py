@@ -10,38 +10,41 @@ st.set_page_config(
 )
 
 st.markdown("""
+st.markdown("""
     <style>
-    /* إخفاء الإعلانات والفوتر تماماً */
-    footer {display: none !important;}
-    header {display: none !important;}
-    #MainMenu {display: none !important;}
+    /* 1. إخفاء الفوتر تماماً بكل عناصره */
+    footer {
+        display: none !important;
+    }
+    
+    /* 2. إخفاء شريط الأدوات السفلي وعلامة Streamlit */
+    [data-testid="stFooterBlock"] {
+        display: none !important;
+    }
+    
+    /* 3. إخفاء القائمة العلوية والشريط الأسود اللي فوق */
+    header {
+        display: none !important;
+    }
+    
+    #MainMenu {
+        display: none !important;
+    }
 
-    /* ضبط خلفية التطبيق */
+    /* 4. مسح أي مساحة بيضاء كانت مخصصة للإعلانات */
+    .stApp {
+        bottom: 0 !important;
+    }
+
+    /* بقية الستايل بتاعك */
     [data-testid="stAppViewContainer"] {
         background-color: #0E1117 !important;
     }
-
-    /* جعل النصوص واضحة */
-    p, span, div {
-        color: #FFFFFF !important;
-    }
-
-    /* العنوان النيوني */
-    h1 {
-        color: #00F2FF !important;
-        text-shadow: 0px 0px 15px #00F2FF;
-        text-align: center;
-    }
-
-    /* 🔥 حل مشكلة المستطيل الأبيض في منطقة الإدخال */
-    [data-testid="stChatInput"] {
-        background-color: transparent !important;
-    }
+    
+    /* ضبط لون الكتابة في المستطيل قبل الإرسال */
     [data-testid="stChatInput"] textarea {
-        background-color: #161B22 !important; /* لون داكن بدل الأبيض */
-        color: #FFFFFF !important; /* خط أبيض واضح */
-        border: 1px solid #00F2FF !important;
-        border-radius: 10px !important;
+        color: #000000 !important;
+        background-color: #FFFFFF !important;
     }
     </style>
     """, unsafe_allow_html=True)
