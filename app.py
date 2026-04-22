@@ -9,7 +9,7 @@ st.set_page_config(
     layout="centered"
 )
 
-# الستايل النهائي الموحد (إخفاء البياض + الدخلة الشيك + الستايل النيون)
+# الستايل النهائي الموحد (إخفاء البياض تماماً + الدخلة الشيك + الستايل النيون)
 st.markdown("""
     <style>
     /* إخفاء إضافات ستريم ليت */
@@ -23,19 +23,18 @@ st.markdown("""
         background-color: #0E1117 !important;
     }
 
-    /* حل مشكلة الجزء الأبيض تحت مستطيل الكتابة */
-    div[data-testid="stChatInputContainer"] {
+    /* 2. تعديل منطقة الكتابة السفلية (نهاية البياض) */
+    [data-testid="stBottom"] {
         background-color: #0E1117 !important;
-        padding-bottom: 20px !important;
-        padding-top: 10px !important;
     }
     
-    /* التأكد من سواد المنطقة السفلية تماماً */
-    [data-testid="stBottom"] > div {
+    div[data-testid="stChatInputContainer"] {
         background-color: #0E1117 !important;
+        padding: 10px !important;
+        border-top: 1px solid #00F2FF22 !important; /* خط نيون خفيف جداً */
     }
 
-    /* شاشة الدخول الشيك */
+    /* ستايل شاشة الدخول الشيك */
     #splash-screen {
         position: fixed;
         top: 0; left: 0; width: 100%; height: 100%;
@@ -67,6 +66,7 @@ st.markdown("""
         100% { opacity: 0; visibility: hidden; }
     }
 
+    /* ستايل العناوين والشات */
     h1 {
         color: #00F2FF !important;
         text-shadow: 0px 0px 15px #00F2FF;
@@ -128,21 +128,4 @@ if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
         message_placeholder = st.empty()
         full_response = ""
         try:
-            messages_to_send = [{"role": "system", "content": system_identity}] + [
-                {"role": m["role"], "content": m["content"]} for m in st.session_state.messages
-            ]
-            completion = client.chat.completions.create(
-                model="llama-3.3-70b-versatile", 
-                messages=messages_to_send,
-                stream=True,
-            )
-            for chunk in completion:
-                content = chunk.choices[0].delta.content
-                if content:
-                    full_response += str(content)
-                    message_placeholder.markdown(full_response + "▌")
-            message_placeholder.markdown(full_response)
-            st.session_state.messages.append({"role": "assistant", "content": full_response})
-        except Exception as e:
-            st.error(f"حدث خطأ يا حريف: {str(e)}")
-                                 
+            
