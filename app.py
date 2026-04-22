@@ -10,7 +10,7 @@ st.set_page_config(
 )
 
 # الستايل النهائي الموحد (إخفاء البياض + الدخلة الشيك + الستايل النيون)
-st.markdown("""
+st.markdown(""
     <style>
     /* إخفاء إضافات ستريم ليت */
     footer {visibility: hidden; height: 0%;}
