@@ -6,7 +6,7 @@ import json
 import os
 from duckduckgo_search import DDGS
 
-# 1. إعدادات الصفحة الأساسية
+# 1. إعدادات الصفحة
 st.set_page_config(page_title="Fekra AI", page_icon="💡", layout="centered")
 
 # --- نظام الذاكرة ---
@@ -21,28 +21,31 @@ def load_mem():
 if "user_name" not in st.session_state:
     st.session_state.user_name = load_mem()["user_name"]
 
-# 2. الستايل النيون وحل مشكلة السكرول (بدون أخطاء برمجية)
-# استخدمنا r قبل النص البرمجي لمنع مشاكل علامات التنصيص
+# 2. الستايل النيون + إخفاء الاسبينر + السكرول الحر
 st.markdown(r"""
 <style>
-    /* إخفاء القوائم الافتراضية */
+    /* 1. إخفاء الاسبينر والزوائد (طلبك الأساسي) */
+    [data-testid="stStatusWidget"] {
+        display: none !important;
+        visibility: hidden !important;
+    }
     footer {visibility: hidden;}
     header {visibility: hidden;}
     #MainMenu {visibility: hidden;}
 
-    /* الخلفية النيون ومنع الريستارت */
+    /* 2. الخلفية ومنع الريستارت عند الشد */
     html, body, [data-testid="stAppViewContainer"] {
         background-color: #0E1117 !important;
         overscroll-behavior-y: none !important;
     }
 
-    /* جعل منطقة الشات قابلة للسكرول الانسيابي */
+    /* 3. جعل الشات يسكرول زي ChatGPT و Gemini */
     [data-testid="stMainViewContainer"] {
         overflow-y: auto !important;
         scroll-behavior: smooth;
     }
 
-    /* تصميم رسائل الشات النيون */
+    /* 4. تصميم الرسائل النيون */
     .stChatMessage {
         background: #161B22 !important;
         border: 1px solid #00F2FF33 !important;
@@ -50,11 +53,16 @@ st.markdown(r"""
         box-shadow: 0 0 10px #00F2FF11;
         margin-bottom: 10px;
     }
+    
+    div[data-testid="stChatInputContainer"] {
+        background-color: #0E1117 !important;
+        border: none !important;
+    }
 
-    /* زرار الصعود للأعلى النيون */
+    /* 5. زرار الصعود النيون */
     #scrollToTopBtn {
         position: fixed;
-        right: 20px;
+        right: 25px;
         bottom: 110px;
         width: 50px;
         height: 50px;
@@ -70,11 +78,9 @@ st.markdown(r"""
         display: flex;
         justify-content: center;
         align-items: center;
-        transition: 0.3s;
     }
-    #scrollToTopBtn:hover { background: #00F2FF33; }
 
-    /* شاشة الدخول */
+    /* 6. شاشة الدخول */
     #splash {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background: #0E1117; display: flex; flex-direction: column;
@@ -95,7 +101,7 @@ st.markdown(r"""
 <button id="scrollToTopBtn" onclick="window.parent.postMessage('scroll_to_top', '*')">↑</button>
 """, unsafe_allow_html=True)
 
-# جافا سكريبت الصعود للأعلى (ربط مباشر بالصفحة الأم)
+# جافا سكريبت الصعود للأعلى
 components.html("""
 <script>
     window.parent.addEventListener('message', function(e) {
@@ -109,18 +115,17 @@ components.html("""
 </script>
 """, height=0)
 
-# 3. المنطق البرمجي (بناء الشات)
+# 3. المنطق البرمجي
 st.title("💡 Fekra AI")
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# عرض تاريخ المحادثة
+# عرض المحادثة
 for m in st.session_state.messages:
     with st.chat_message(m["role"]):
         st.markdown(m["content"])
 
-# إدخال المستخدم
 if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
@@ -130,20 +135,19 @@ if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
         try:
             client = Groq(api_key=st.secrets["GROQ_API_KEY"])
             
-            # محرك البحث (مفعل فقط عند الضرورة)
             s_info = ""
-            search_keywords = ["بحث", "اخبار", "سعر", "مين هو", "اخر تطورات"]
-            if any(w in prompt.lower() for w in search_keywords):
+            if any(w in prompt.lower() for w in ["بحث", "اخبار", "سعر"]):
                 with DDGS() as ddgs:
                     results = [r['body'] for r in ddgs.text(prompt, max_results=3)]
                     s_info = "\n".join(results)
 
-            # تعليمات صارمة للموديل لمنع الصيني والرموز الغريبة
-            sys_p = f"""أنت Fekra AI، مساعد ذكي متطور صممك أحمد وائل الحريف. 
-            نادِ المستخدم بـ: {st.session_state.user_name}. 
-            تحدث بلهجة مصرية سليمة 100%. 
-            ممنوع منعاً باتاً استخدام حروف صينية، يابانية، أو رموز غير مفهومة. 
-            تأكد من خلو ردودك من أي أخطاء إملائية. الوقت الحالي: {datetime.now().strftime('%I:%M %p')}."""
+            # تحصين الموديل ضد الحروف الصيني والأخطاء
+            sys_p = f"""أنت Fekra AI، مساعد ذكي صممه أحمد وائل الحريف.
+            1. نادِ المستخدم بـ: {st.session_state.user_name}.
+            2. تحدث بلهجة مصرية مفهومة وواضحة جداً.
+            3. ممنوع تماماً استخدام أي حروف صينية أو رموز غريبة.
+            4. ركز على الدقة الإملائية في كل كلمة.
+            الوقت الحالي: {datetime.now().strftime('%I:%M %p')}."""
             
             history = [{"role": "system", "content": sys_p}] + st.session_state.messages[:-1]
             history.append({"role": "user", "content": f"{prompt}\n\n[Context]: {s_info}"})
@@ -158,7 +162,6 @@ if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
                     p_holder.markdown(full_r + "▌")
             p_holder.markdown(full_r)
             st.session_state.messages.append({"role": "assistant", "content": full_r})
-            
         except Exception as e:
-            st.error(f"عذراً يا حريف، حصل خطأ في الاتصال: {e}")
+            st.error(f"Error: {e}")
             
