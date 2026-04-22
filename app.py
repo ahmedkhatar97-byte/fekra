@@ -9,7 +9,7 @@ st.set_page_config(
     layout="centered"
 )
 
-# الستايل اللي حفظناه (بدون تغيير)
+# الستايل اللي حفظناه (إخفاء الإعلانات + ضبط الألوان + وضوح الكتابة)
 st.markdown("""
     <style>
     footer {visibility: hidden; height: 0%;}
@@ -70,11 +70,43 @@ client = Groq(api_key=GROQ_API_KEY)
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# الدستور الذكي: يعرف المعلومة ويستخدمها عند الحاجة فقط
-system_identity = f"""
-أنت فكرة AI (Fekra AI)، مساعد ذكي ومبتكر طوره المبرمج أحمد وائل الحريف.
+# الدستور الذكي: يعرف المعلومة ويستخدمها عند الحاجة فقط (تم إصلاح الأقواس)
+system_identity = f"أنت فكرة AI (Fekra AI)، مساعد ذكي ومبتكر طوره أحمد وائل الحريف. معلومات الوقت الآن: {current_time_info}. لا تذكر الوقت إلا لو سألك المستخدم عنه. اسمك هو Fekra AI."
 
-تعليمات التعامل مع الوقت والاسم:
-1. اسمك "Fekra AI". لا تذكره إلا إذا سألك المستخدم "ما اسمك؟".
-2. لديك علم بالوقت الحالي: {current_time_
-                            
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+
+if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.markdown(prompt)
+
+    with st.chat_message("assistant"):
+        message_placeholder = st.empty()
+        full_response = ""
+        
+        try:
+            messages_to_send = [{"role": "system", "content": system_identity}] + [
+                {"role": m["role"], "content": m["content"]}
+                for m in st.session_state.messages
+            ]
+
+            completion = client.chat.completions.create(
+                model="llama-3.3-70b-versatile", 
+                messages=messages_to_send,
+                stream=True,
+            )
+
+            for chunk in completion:
+                content = chunk.choices[0].delta.content
+                if content:
+                    full_response += str(content)
+                    message_placeholder.markdown(full_response + "▌")
+            
+            message_placeholder.markdown(full_response)
+            st.session_state.messages.append({"role": "assistant", "content": full_response})
+            
+        except Exception as e:
+            st.error(f"حدث خطأ يا حريف: {str(e)}")
+            
