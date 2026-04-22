@@ -1,10 +1,13 @@
 import streamlit as st
 from groq import Groq
 
+# 1. إعدادات الصفحة
 st.set_page_config(page_title="Fekra AI", page_icon="💡")
 
 st.title("💡 Fekra AI")
+st.caption("النسخة الأحدث والأكثر استقراراً")
 
+# 2. جلب المفتاح
 try:
     GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
 except:
@@ -20,6 +23,7 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
+# 3. معالجة الشات
 if prompt := st.chat_input("بماذا تفكر يا هريف؟"):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
@@ -30,16 +34,17 @@ if prompt := st.chat_input("بماذا تفكر يا هريف؟"):
         full_response = ""
         
         try:
-            # الموديل ده "الجوكر" بتاع Groq وموجود دايماً
+            # الموديل المستقر والمدعوم حالياً
             completion = client.chat.completions.create(
-                model="llama3-8b-8192", 
+                model="llama-3.3-70b-versatile", 
                 messages=[{"role": m["role"], "content": m["content"]} for m in st.session_state.messages],
                 stream=True,
             )
 
             for chunk in completion:
-                content = chunk.choices[0].delta.content
-                if content:
+                # حماية إضافية لضمان أن النص ليس كائن (Object)
+                if chunk.choices[0].delta.content:
+                    content = str(chunk.choices[0].delta.content)
                     full_response += content
                     message_placeholder.markdown(full_response + "▌")
             
@@ -47,5 +52,5 @@ if prompt := st.chat_input("بماذا تفكر يا هريف؟"):
             st.session_state.messages.append({"role": "assistant", "content": full_response})
             
         except Exception as e:
-            st.error(f"حدث خطأ: {str(e)}")
+            st.error(f"حدث خطأ في النظام: {str(e)}")
             
