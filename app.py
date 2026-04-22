@@ -8,8 +8,8 @@ from duckduckgo_search import DDGS
 # 1. إعدادات الصفحة
 st.set_page_config(page_title="Fekra AI", page_icon="💡", layout="centered")
 
-# --- نظام الذاكرة المستديمة ---
-def get_memory():
+# --- نظام الذاكرة الآمن ---
+def load_mem():
     if os.path.exists("memory.json"):
         try:
             with open("memory.json", "r", encoding="utf-8") as f:
@@ -17,29 +17,27 @@ def get_memory():
         except: pass
     return {"user_name": "يا حريف"}
 
-def save_memory(name):
+def save_mem(name):
     with open("memory.json", "w", encoding="utf-8") as f:
         json.dump({"user_name": name}, f, ensure_ascii=False)
 
 if "user_name" not in st.session_state:
-    st.session_state.user_name = get_memory()["user_name"]
+    st.session_state.user_name = load_mem()["user_name"]
 
-# 2. الستايل القاتل للبياض (مع تعديل السكرول عشان ما يهنجش)
+# 2. الستايل (حل نهائي للسكرول والـ Restart)
 st.markdown("""
 <style>
     footer {visibility: hidden;}
     header {visibility: hidden;}
     #MainMenu {visibility: hidden;}
-
-    .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"], [data-testid="stBottom"] {
+    
+    /* سواد تام وتثبيت الشات */
+    .stApp, [data-testid="stAppViewContainer"], [data-testid="stBottom"] {
         background-color: #0E1117 !important;
     }
 
-    /* تثبيت الشات ومنع الـ Restart عند السكرول */
-    .main .block-container {
-        max-width: 100% !important;
-        overflow-y: auto !important;
-    }
+    /* منع الـ Restart عند السكرول في الموبايل */
+    .main { overflow: auto !important; }
 
     div[data-testid="stChatInputContainer"] {
         background-color: #0E1117 !important;
@@ -52,6 +50,7 @@ st.markdown("""
         border: none !important;
     }
 
+    /* شاشة الدخول */
     #splash {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background: #0E1117; display: flex; flex-direction: column;
@@ -62,7 +61,7 @@ st.markdown("""
     
     h1 { color: #00F2FF !important; text-shadow: 0 0 15px #00F2FF; text-align: center; }
     .stChatMessage { background: #161B22 !important; border: 1px solid #00F2FF33 !important; border-radius: 15px !important; }
-    [data-testid="stChatInput"] textarea { color: #FFFFFF !important; background: #161B22 !important; }
+    [data-testid="stChatInput"] textarea { color: #000 !important; background: #FFF !important; }
     p, span, div { color: #FFF !important; }
 </style>
 <div id="splash">
@@ -71,7 +70,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# 3. المنطق البرمجي والوقت
+# 3. المنطق البرمجي
 now = datetime.now()
 current_time_info = now.strftime("%A, %d %B %Y | %I:%M %p")
 
@@ -81,10 +80,12 @@ st.markdown("<p style='text-align: center; color: #808495 !important;'>نسخة 
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
+# عرض المحادثة
 for m in st.session_state.messages:
     with st.chat_message(m["role"]):
         st.markdown(m["content"])
 
+# إدخال المستخدم والرد
 if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
@@ -94,6 +95,32 @@ if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
         try:
             client = Groq(api_key=st.secrets["GROQ_API_KEY"])
             
-            # --- حفظ الاسم تلقائياً ---
-            if any(x in prompt for x in ["اس
-                                         
+            # --- الذاكرة والبحث ---
+            if any(x in prompt for x in ["اسمي", "ناديني"]):
+                name = prompt.split()[-1].strip("!؟.")
+                st.session_state.user_name = name
+                save_mem(name)
+
+            search_info = ""
+            if any(w in prompt.lower() for w in ["بحث", "اخبار", "مين هو", "سعر"]):
+                with DDGS() as ddgs:
+                    res_list = [r['body'] for r in ddgs.text(prompt, max_results=3)]
+                    search_info = "\n".join(res_list)
+
+            sys_msg = f"أنت Fekra AI، صممك أحمد وائل الحريف. تنادي المستخدم بـ: {st.session_state.user_name}. الوقت: {current_time_info}. رد بالمصرية."
+            history = [{"role": "system", "content": sys_msg}] + st.session_state.messages[:-1]
+            history.append({"role": "user", "content": f"{prompt}\n\n[Search Results]: {search_info}"})
+            
+            res = client.chat.completions.create(model="llama-3.3-70b-versatile", messages=history, stream=True)
+            
+            full_res = ""
+            placeholder = st.empty()
+            for chunk in res:
+                if chunk.choices[0].delta.content:
+                    full_res += chunk.choices[0].delta.content
+                    placeholder.markdown(full_res + "▌")
+            placeholder.markdown(full_res)
+            st.session_state.messages.append({"role": "assistant", "content": full_res})
+        except Exception as e:
+            st.error(f"Error: {e}")
+            
