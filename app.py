@@ -11,52 +11,43 @@ st.set_page_config(
 # الستايل النهائي: إخفاء الإعلانات + ضبط الألوان + وضوح الكتابة
 st.markdown("""
     <style>
-    /* إخفاء شريط Streamlit السفلي (الإعلانات) والقائمة العلوية */
-    footer {visibility: hidden; height: 0%;}
-    header {visibility: hidden;}
-    #MainMenu {visibility: hidden;}
-    [data-testid="stStatusWidget"] {visibility: hidden;}
+    /* 1. إخفاء الفوتر تماماً بكل عناصره */
+    footer {
+        display: none !important;
+    }
+    
+    /* 2. إخفاء شريط الأدوات السفلي وعلامة Streamlit */
+    [data-testid="stFooterBlock"] {
+        display: none !important;
+    }
+    
+    /* 3. إخفاء القائمة العلوية والشريط الأسود اللي فوق */
+    header {
+        display: none !important;
+    }
+    
+    #MainMenu {
+        display: none !important;
+    }
 
-    /* السيطرة على الخلفية ومنع أي مساحات بيضاء */
-    [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
+    /* 4. مسح أي مساحة بيضاء كانت مخصصة للإعلانات */
+    .stApp {
+        bottom: 0 !important;
+    }
+
+    /* بقية الستايل بتاعك */
+    [data-testid="stAppViewContainer"] {
         background-color: #0E1117 !important;
     }
     
-    /* جعل النصوص المرسلة واضحة جداً باللون الأبيض */
-    p, span, div, label {
-        color: #FFFFFF !important;
-        font-weight: 500;
-    }
-
-    /* ستايل العنوان النيوني */
-    h1 {
-        color: #00F2FF !important;
-        text-shadow: 0px 0px 15px #00F2FF;
-        font-family: 'Segoe UI', sans-serif;
-        text-align: center;
-        margin-top: -50px;
-    }
-
-    /* تعديل فقاعات الدردشة */
-    .stChatMessage {
-        background-color: #161B22 !important;
-        border: 1px solid #00F2FF33 !important;
-        border-radius: 15px !important;
-    }
-
-    /* ضبط لون الكلام "أسود" أثناء الكتابة في المستطيل لزيادة الوضوح */
+    /* ضبط لون الكتابة في المستطيل قبل الإرسال */
     [data-testid="stChatInput"] textarea {
         color: #000000 !important;
         background-color: #FFFFFF !important;
-        caret-color: #000000 !important;
-    }
-    
-    /* تحسين زر الإرسال */
-    [data-testid="stChatInput"] button {
-        color: #00F2FF !important;
     }
     </style>
     """, unsafe_allow_html=True)
+
 
 st.title("💡 Fekra AI")
 st.markdown("<p style='text-align: center; color: #808495 !important;'>نسخة الحريف الشاملة | ذكاء بلا حدود</p>", unsafe_allow_html=True)
