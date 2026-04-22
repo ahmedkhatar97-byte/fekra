@@ -1,29 +1,35 @@
 import streamlit as st
-import g4f
-from g4f.client import Client
+from groq import Groq
 
-# 1. إعدادات الصفحة
+# 1. إعدادات الصفحة والستايل
 st.set_page_config(
     page_title="Fekra AI",
     page_icon="💡",
     layout="centered"
 )
 
-# 2. تحسين شكل الشات بـ CSS
+# إضافة ستايل لتحسين شكل الرسائل
 st.markdown("""
     <style>
     .stChatMessage {
         border-radius: 15px;
         margin-bottom: 10px;
     }
-    /* إخفاء القائمة العلوية لـ Streamlit لمظهر احترافي */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
     </style>
     """, unsafe_allow_html=True)
 
 st.title("💡 Fekra AI")
-st.caption("Powered by Blackbox Engine (Free GPT-4o)")
+st.caption("أسرع ذكاء اصطناعي - مستقر وآمن 100%")
+
+# 2. جلب مفتاح الـ API من الـ Secrets (الخزنة)
+# تأكد انك ضفت GROQ_API_KEY في إعدادات Streamlit Cloud
+try:
+    GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
+except:
+    st.error("مفتاح الـ API غير موجود في إعدادات Secrets!")
+    st.stop()
+
+client = Groq(api_key=GROQ_API_KEY)
 
 # 3. تهيئة الذاكرة (Memory)
 if "messages" not in st.session_state:
@@ -36,22 +42,19 @@ for message in st.session_state.messages:
 
 # 5. منطقة الشات والرد
 if prompt := st.chat_input("بماذا تفكر يا هريف؟"):
-    # عرض رسالة المستخدم
+    # إضافة رسالة المستخدم للسجل
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # توليد رد الذكاء الاصطناعي
+    # توليد رد الذكاء الاصطناعي بنظام الـ Streaming
     with st.chat_message("assistant"):
         message_placeholder = st.empty()
         full_response = ""
         
         try:
-            client = Client()
-            # استخدمنا هنا Blackbox لأنه أثبت كفاءة ومن غير طلبات معقدة
-            response = client.chat.completions.create(
-                model="gpt-4o",
-                provider=g4f.Provider.Blackbox,
+            completion = client.chat.completions.create(
+                model="llama3-70b-8192", # موديل جبار وسريع جداً
                 messages=[
                     {"role": m["role"], "content": m["content"]}
                     for m in st.session_state.messages
@@ -59,11 +62,11 @@ if prompt := st.chat_input("بماذا تفكر يا هريف؟"):
                 stream=True,
             )
 
-            for chunk in response:
-                if chunk.choices[0].delta.content:
-                    content = chunk.choices[0].delta.content
+            for chunk in completion:
+                content = chunk.choices[0].delta.content
+                if content:
                     full_response += content
-                    # علامة الـ cursor عشان يحسس المستخدم إنه بيكتب لايف
+                    # عرض النص وهو بيتكتب "لايف"
                     message_placeholder.markdown(full_response + "▌")
             
             # عرض الرد النهائي وحفظه في الذاكرة
@@ -71,17 +74,5 @@ if prompt := st.chat_input("بماذا تفكر يا هريف؟"):
             st.session_state.messages.append({"role": "assistant", "content": full_response})
             
         except Exception as e:
-            # لو الـ Blackbox واجه مشكلة، جرب مزود احتياطي فوراً
-            st.error(f"حصل مشكلة بسيطة، جاري المحاولة مرة أخرى...")
-            try:
-                response = client.chat.completions.create(
-                    model="gpt-4o",
-                    provider=g4f.Provider.DarkAI, # مزود احتياطي
-                    messages=[{"role": "user", "content": prompt}]
-                )
-                full_response = response.choices[0].message.content
-                message_placeholder.markdown(full_response)
-                st.session_state.messages.append({"role": "assistant", "content": full_response})
-            except:
-                st.error("المزودين مشغولين حالياً، جرب كمان دقيقة.")
-                    
+            st.error(f"عذراً، حدث خطأ تقني: {str(e)}")
+                                                
