@@ -2,14 +2,14 @@ import streamlit as st
 import g4f
 from g4f.client import Client
 
-# 1. إعدادات الصفحة والستايل
+# 1. إعدادات الصفحة
 st.set_page_config(
     page_title="Fekra AI",
     page_icon="💡",
     layout="centered"
 )
 
-# إضافة ستايل بسيط لتحسين شكل الشات
+# 2. إضافة ستايل (التصحيح هنا)
 st.markdown("""
     <style>
     .stChatMessage {
@@ -17,37 +17,34 @@ st.markdown("""
         margin-bottom: 10px;
     }
     </style>
-    """, unsafe_allow_index=True)
+    """, unsafe_allow_html=True)
 
 st.title("💡 Fekra AI")
 st.caption("Powered by Free GPT-4 Engine")
 
-# 2. تهيئة سجل المحادثة (Memory)
+# 3. تهيئة سجل المحادثة
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# 3. عرض الرسائل القديمة
+# 4. عرض الرسائل
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# 4. منطقة إدخال المستخدم والرد
-if prompt := st.chat_input("بماذا تفكر يا هريف؟"):
-    # إضافة رسالة المستخدم للسجل وعرضها
+# 5. منطقة الإدخال والرد
+if prompt := st.chat_input("بماذا تفكر؟"):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # توليد رد الذكاء الاصطناعي
     with st.chat_message("assistant"):
         message_placeholder = st.empty()
         full_response = ""
         
         try:
-            # استخدام الـ Client الجديد لمكتبة g4f لثبات أكتر
             client = Client()
             response = client.chat.completions.create(
-                model=g4f.models.gpt_4o, # جرب gpt_4o أسرع وأذكى
+                model=g4f.models.gpt_4o,
                 messages=[
                     {"role": m["role"], "content": m["content"]}
                     for m in st.session_state.messages
@@ -65,9 +62,5 @@ if prompt := st.chat_input("بماذا تفكر يا هريف؟"):
             st.session_state.messages.append({"role": "assistant", "content": full_response})
             
         except Exception as e:
-            # حل مشكلة الـ concatenation اللي ظهرت لك
-            error_msg = str(e)
-            st.error(f"عذراً، حدث خطأ تقني: {error_msg}")
-            # محاولة بديلة لو الـ Streaming فشل
-            st.info("جاري محاولة الاتصال بمزود خدمة آخر...")
+            st.error(f"حدث خطأ: {str(e)}")
             
