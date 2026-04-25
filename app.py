@@ -8,31 +8,29 @@ st.set_page_config(
     layout="centered"
 )
 
-# الستايل النهائي: إخفاء الإعلانات + ضبط الألوان + توحيد استايل الإدخال مع الشات
-st.markdown("""
+# الستايل النهائي: إخفاء الأبيض تماماً + توحيد النيون
+st.markdown(r"""
     <style>
-    /* إخفاء شريط Streamlit السفلي والقائمة العلوية */
+    /* إخفاء شريط Streamlit السفلي والقائمة العلوية والاسبينر */
     footer {visibility: hidden; height: 0%;}
     header {visibility: hidden;}
     #MainMenu {visibility: hidden;}
-    [data-testid="stStatusWidget"] {visibility: hidden;}
+    [data-testid="stStatusWidget"] {visibility: hidden; display: none !important;}
 
-    /* السيطرة على الخلفية */
+    /* الخلفية الأساسية */
     [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
         background-color: #0E1117 !important;
     }
     
-    /* جعل النصوص المرسلة واضحة باللون الأبيض */
+    /* جعل النصوص واضحة باللون الأبيض */
     p, span, div, label {
         color: #FFFFFF !important;
-        font-weight: 500;
     }
 
     /* ستايل العنوان النيوني */
     h1 {
         color: #00F2FF !important;
         text-shadow: 0px 0px 15px #00F2FF;
-        font-family: 'Segoe UI', sans-serif;
         text-align: center;
         margin-top: -50px;
     }
@@ -44,25 +42,26 @@ st.markdown("""
         border-radius: 15px !important;
     }
 
-    /* --- التعديل المطلوب: توحيد صندوق الكتابة مع استايل النيون --- */
-    [data-testid="stChatInput"] textarea {
-        color: #FFFFFF !important; /* الكتابة بالأبيض عشان التناسق */
-        background-color: #161B22 !important; /* نفس لون فقاعة الشات */
-        border: 1px solid #00F2FF33 !important; /* نفس البرواز النيون */
-        border-radius: 15px !important;
-        caret-color: #00F2FF !important; /* مؤشر الكتابة لبني نيون */
-        box-shadow: 0 0 10px #00F2FF11 !important;
-    }
-    
-    /* إخفاء الحواف البيضاء الافتراضية حول الصندوق */
-    [data-testid="stChatInput"] {
+    /* --- الحل السحري لإخفاء الأبيض في منطقة الإدخال --- */
+    div[data-testid="stChatInputContainer"] {
         background-color: transparent !important;
         border: none !important;
     }
 
-    /* تحسين زر الإرسال ليكون نيون */
+    /* ستايل مستطيل الكتابة نفسه */
+    [data-testid="stChatInput"] textarea {
+        color: #FFFFFF !important;
+        background-color: #161B22 !important;
+        border: 1px solid #00F2FF33 !important;
+        border-radius: 15px !important;
+        caret-color: #00F2FF !important;
+        box-shadow: 0 0 10px #00F2FF11 !important;
+    }
+    
+    /* ضبط لون أيقونة الإرسال */
     [data-testid="stChatInput"] button {
         color: #00F2FF !important;
+        background-color: transparent !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -79,13 +78,13 @@ except:
 
 client = Groq(api_key=GROQ_API_KEY)
 
-# 3. تهيئة الذاكرة والدستور (System Prompt)
+# 3. تهيئة الذاكرة والدستور
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
 system_identity = """
 أنت فكرة AI (Fekra AI)، المساعد الذكي والمبتكر الذي طوره المبرمج أحمد وائل (الحريف).
-... (بقية الدستور الخاص بك كما هو) ...
+... (بقية الدستور الخاص بك) ...
 """
 
 # 4. عرض رسائل الدردشة
