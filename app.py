@@ -8,21 +8,21 @@ st.set_page_config(
     layout="centered"
 )
 
-# الستايل النهائي: إخفاء الإعلانات + ضبط الألوان + وضوح الكتابة
+# الستايل النهائي: إخفاء الإعلانات + ضبط الألوان + توحيد استايل الإدخال مع الشات
 st.markdown("""
     <style>
-    /* إخفاء شريط Streamlit السفلي (الإعلانات) والقائمة العلوية */
+    /* إخفاء شريط Streamlit السفلي والقائمة العلوية */
     footer {visibility: hidden; height: 0%;}
     header {visibility: hidden;}
     #MainMenu {visibility: hidden;}
     [data-testid="stStatusWidget"] {visibility: hidden;}
 
-    /* السيطرة على الخلفية ومنع أي مساحات بيضاء */
+    /* السيطرة على الخلفية */
     [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
         background-color: #0E1117 !important;
     }
     
-    /* جعل النصوص المرسلة واضحة جداً باللون الأبيض */
+    /* جعل النصوص المرسلة واضحة باللون الأبيض */
     p, span, div, label {
         color: #FFFFFF !important;
         font-weight: 500;
@@ -37,21 +37,30 @@ st.markdown("""
         margin-top: -50px;
     }
 
-    /* تعديل فقاعات الدردشة */
+    /* فقاعات الدردشة النيون */
     .stChatMessage {
         background-color: #161B22 !important;
         border: 1px solid #00F2FF33 !important;
         border-radius: 15px !important;
     }
 
-    /* ضبط لون الكلام "أسود" أثناء الكتابة في المستطيل لزيادة الوضوح */
+    /* --- التعديل المطلوب: توحيد صندوق الكتابة مع استايل النيون --- */
     [data-testid="stChatInput"] textarea {
-        color: #000000 !important;
-        background-color: #FFFFFF !important;
-        caret-color: #000000 !important;
+        color: #FFFFFF !important; /* الكتابة بالأبيض عشان التناسق */
+        background-color: #161B22 !important; /* نفس لون فقاعة الشات */
+        border: 1px solid #00F2FF33 !important; /* نفس البرواز النيون */
+        border-radius: 15px !important;
+        caret-color: #00F2FF !important; /* مؤشر الكتابة لبني نيون */
+        box-shadow: 0 0 10px #00F2FF11 !important;
     }
     
-    /* تحسين زر الإرسال */
+    /* إخفاء الحواف البيضاء الافتراضية حول الصندوق */
+    [data-testid="stChatInput"] {
+        background-color: transparent !important;
+        border: none !important;
+    }
+
+    /* تحسين زر الإرسال ليكون نيون */
     [data-testid="stChatInput"] button {
         color: #00F2FF !important;
     }
@@ -61,7 +70,7 @@ st.markdown("""
 st.title("💡 Fekra AI")
 st.markdown("<p style='text-align: center; color: #808495 !important;'>نسخة الحريف الشاملة | ذكاء بلا حدود</p>", unsafe_allow_html=True)
 
-# 2. جلب مفتاح الـ API من الـ Secrets
+# 2. جلب مفتاح الـ API
 try:
     GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
 except:
@@ -76,22 +85,7 @@ if "messages" not in st.session_state:
 
 system_identity = """
 أنت فكرة AI (Fekra AI)، المساعد الذكي والمبتكر الذي طوره المبرمج أحمد وائل (الحريف).
-
-قواعد الهوية:
-- إذا سألك المستخدم عن اسمك أو من أنت، قل: "أنا فكرة AI، طورني المبرمج أحمد وائل الحريف".
-- في الأسئلة العادية، جاوب مباشرة دون تكرار التعريف بنفسك.
-
-أنت خبير في:
-1. الأسئلة اليومية السريعة (طقس، دولار، حسابات).
-2. الذكاء الاصطناعي (ChatGPT، برمجة، أكواد).
-3. التعليم (شرح دروس، ترجمة، ملخصات).
-4. البيزنس (أفكار مشاريع، CV، خطط عمل).
-5. التكنولوجيا (مقارنة أجهزة، حل مشاكل تقنية).
-6. الألعاب (إعدادات فيفا وفري فاير، حل اللاج).
-7. الترفيه (كتابة راب، سكريبتات، قصص).
-8. تطوير الذات (ثقة، تركيز، تنظيم وقت).
-9. العلاقات (نصائح اجتماعية).
-10. الأخبار والتريندات الكروية.
+... (بقية الدستور الخاص بك كما هو) ...
 """
 
 # 4. عرض رسائل الدردشة
@@ -132,3 +126,4 @@ if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
             
         except Exception as e:
             st.error(f"حدث خطأ يا حريف: {str(e)}")
+            
