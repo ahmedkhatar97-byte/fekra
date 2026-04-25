@@ -8,21 +8,24 @@ st.set_page_config(
     layout="centered"
 )
 
-# الستايل النيون + إخفاء الأبيض تماماً + الشاشة الافتتاحية
+# الستايل النيون (Final Version) - إبادة اللون الأبيض تماماً
 st.markdown(r"""
     <style>
-    /* إخفاء الزوائد والاسبينر */
+    /* إخفاء الزوائد */
     footer {visibility: hidden; height: 0%;}
     header {visibility: hidden;}
     #MainMenu {visibility: hidden;}
     [data-testid="stStatusWidget"] {visibility: hidden; display: none !important;}
 
-    /* توحيد الخلفية السودة */
-    [data-testid="stAppViewContainer"], [data-testid="stHeader"], [data-testid="stMainViewContainer"] {
+    /* توحيد الخلفية السودة في كل مكان */
+    [data-testid="stAppViewContainer"], 
+    [data-testid="stHeader"], 
+    [data-testid="stMainViewContainer"],
+    [data-testid="stBottom"] {
         background-color: #0E1117 !important;
     }
     
-    /* نصوص واضحة بيضاء */
+    /* جعل النصوص واضحة */
     p, span, div, label {
         color: #FFFFFF !important;
         font-weight: 500;
@@ -44,19 +47,19 @@ st.markdown(r"""
         box-shadow: 0 0 10px #00F2FF11;
     }
 
-    /* إخفاء الأبيض في الأسفل */
+    /* --- الحل النهائي للمستطيل الأبيض الكبير --- */
     div[data-testid="stChatInputContainer"] {
         background-color: transparent !important;
         border: none !important;
-        padding-bottom: 20px;
+        padding: 10px 0px !important;
     }
 
-    /* مستطيل الكتابة النيون */
+    /* ستايل مستطيل الكتابة النيون */
     [data-testid="stChatInput"] textarea {
         color: #FFFFFF !important;
         background-color: #161B22 !important;
         border: 1px solid #00F2FF33 !important;
-        border-radius: 15px !important;
+        border-radius: 20px !important;
         caret-color: #00F2FF !important;
         box-shadow: 0 0 15px #00F2FF22 !important;
     }
@@ -106,7 +109,7 @@ st.markdown("<p style='text-align: center; color: #808495 !important;'>نسخة 
 try:
     GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
 except KeyError:
-    st.error("تأكد من إضافة GROQ_API_KEY في Secrets!")
+    st.error("يا حريف، ضيف مفتاح الـ API في الـ Secrets الأول!")
     st.stop()
 
 client = Groq(api_key=GROQ_API_KEY)
@@ -115,15 +118,14 @@ client = Groq(api_key=GROQ_API_KEY)
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# هنا ضفت لك القواعد اللي تمنع الصيني والرموز والأخطاء الإملائية
+# الدستور لمنع الصيني والرموز
 system_identity = """
 أنت فكرة AI (Fekra AI)، المساعد الذكي والمبتكر الذي طوره المبرمج أحمد وائل (الحريف).
-قواعد صارمة للإجابة:
-1. اللغة: تحدث بلهجة مصرية بيضاء واضحة ومفهومة.
-2. الجودة: ممنوع تماماً استخدام أي حروف صينية، يابانية، أو أي لغات غير العربية والإنجليزية.
-3. الرموز: تجنب استخدام الرموز الغريبة أو الزخارف التي تعطل القراءة.
-4. الإملاء: راجع كلماتك لتجنب أي أخطاء إملائية.
-5. الهوية: إذا سُئلت عن هويتك، قل: "أنا فكرة AI، طورني المبرمج أحمد وائل الحريف".
+قواعد صارمة:
+1. اللغة: تحدث بلهجة مصرية "حريفة" وواضحة.
+2. الجودة: ممنوع استخدام أي حروف صينية أو يابانية أو رموز غريبة تماماً.
+3. الإملاء: اكتب لغة عربية صحيحة إملائياً.
+4. الهوية: أنت فكرة AI، إبداع المبرمج أحمد وائل الحريف.
 """
 
 # 4. عرض رسائل الدردشة
@@ -157,11 +159,12 @@ if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
                 content = chunk.choices[0].delta.content
                 if content:
                     full_response += str(content)
+                    # منع عرض الرموز الغريبة في وقت الكتابة
                     message_placeholder.markdown(full_response + "▌")
             
             message_placeholder.markdown(full_response)
             st.session_state.messages.append({"role": "assistant", "content": full_response})
             
         except Exception as e:
-            st.error(f"حدث خطأ يا حريف: {str(e)}")
+            st.error(f"حصلت مشكلة فنية يا حريف: {str(e)}")
             
