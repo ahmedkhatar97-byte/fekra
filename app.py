@@ -8,16 +8,16 @@ st.set_page_config(
     layout="centered"
 )
 
-# الستايل النيون (Final Version) - إبادة اللون الأبيض تماماً
+# الستايل النيون (Final Version) - إبادة اللون الأبيض تماماً من الأسفل
 st.markdown(r"""
     <style>
-    /* إخفاء الزوائد */
+    /* 1. إخفاء الزوائد والاسبينر */
     footer {visibility: hidden; height: 0%;}
     header {visibility: hidden;}
     #MainMenu {visibility: hidden;}
     [data-testid="stStatusWidget"] {visibility: hidden; display: none !important;}
 
-    /* توحيد الخلفية السودة في كل مكان */
+    /* 2. توحيد الخلفية السودة في كل مكان */
     [data-testid="stAppViewContainer"], 
     [data-testid="stHeader"], 
     [data-testid="stMainViewContainer"],
@@ -25,13 +25,18 @@ st.markdown(r"""
         background-color: #0E1117 !important;
     }
     
-    /* جعل النصوص واضحة */
+    /* 3. الحل السحري لإخفاء المستطيل الأبيض الكبير اللي ورا الشات */
+    div[data-testid="stBottomBlockContainer"] {
+        background-color: transparent !important;
+    }
+
+    /* 4. جعل النصوص واضحة باللون الأبيض */
     p, span, div, label {
         color: #FFFFFF !important;
         font-weight: 500;
     }
 
-    /* العنوان النيوني */
+    /* 5. ستايل العنوان النيوني */
     h1 {
         color: #00F2FF !important;
         text-shadow: 0px 0px 15px #00F2FF;
@@ -39,7 +44,7 @@ st.markdown(r"""
         margin-top: -50px;
     }
 
-    /* فقاعات الدردشة */
+    /* 6. فقاعات الدردشة */
     .stChatMessage {
         background-color: #161B22 !important;
         border: 1px solid #00F2FF33 !important;
@@ -47,14 +52,13 @@ st.markdown(r"""
         box-shadow: 0 0 10px #00F2FF11;
     }
 
-    /* --- الحل النهائي للمستطيل الأبيض الكبير --- */
+    /* 7. تظبيط مستطيل الكتابة النيون وإلغاء أي حواف بيضاء */
     div[data-testid="stChatInputContainer"] {
         background-color: transparent !important;
         border: none !important;
         padding: 10px 0px !important;
     }
 
-    /* ستايل مستطيل الكتابة النيون */
     [data-testid="stChatInput"] textarea {
         color: #FFFFFF !important;
         background-color: #161B22 !important;
@@ -69,7 +73,7 @@ st.markdown(r"""
         background-color: transparent !important;
     }
 
-    /* الشاشة الافتتاحية */
+    /* 8. الشاشة الافتتاحية النيون */
     #splash-screen {
         position: fixed;
         top: 0; left: 0; width: 100vw; height: 100vh;
@@ -118,14 +122,14 @@ client = Groq(api_key=GROQ_API_KEY)
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# الدستور لمنع الصيني والرموز
+# الدستور لمنع الصيني والرموز وضمان جودة الإملاء
 system_identity = """
 أنت فكرة AI (Fekra AI)، المساعد الذكي والمبتكر الذي طوره المبرمج أحمد وائل (الحريف).
 قواعد صارمة:
-1. اللغة: تحدث بلهجة مصرية "حريفة" وواضحة.
-2. الجودة: ممنوع استخدام أي حروف صينية أو يابانية أو رموز غريبة تماماً.
-3. الإملاء: اكتب لغة عربية صحيحة إملائياً.
-4. الهوية: أنت فكرة AI، إبداع المبرمج أحمد وائل الحريف.
+1. اللغة: تحدث بلهجة مصرية واضحة وذكية تناسب شخصية الحريف.
+2. الجودة: ممنوع استخدام أي حروف صينية أو يابانية أو رموز غريبة.
+3. الإملاء: اكتب لغة عربية سليمة إملائياً بدون أخطاء.
+4. الهوية: إذا سُئلت، أنت "فكرة AI" من تطوير أحمد وائل الحريف.
 """
 
 # 4. عرض رسائل الدردشة
@@ -159,7 +163,6 @@ if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
                 content = chunk.choices[0].delta.content
                 if content:
                     full_response += str(content)
-                    # منع عرض الرموز الغريبة في وقت الكتابة
                     message_placeholder.markdown(full_response + "▌")
             
             message_placeholder.markdown(full_response)
