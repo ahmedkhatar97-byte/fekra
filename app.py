@@ -9,27 +9,26 @@ st.set_page_config(
 )
 
 # الستايل النيون + إخفاء الأبيض تماماً + الشاشة الافتتاحية
-# استخدمنا r قبل النص البرمجي لمنع مشاكل الـ SyntaxError في علامات التنصيص
 st.markdown(r"""
     <style>
-    /* 1. إخفاء شريط Streamlit والاسبينر وكل الزوائد */
+    /* إخفاء الزوائد والاسبينر */
     footer {visibility: hidden; height: 0%;}
     header {visibility: hidden;}
     #MainMenu {visibility: hidden;}
     [data-testid="stStatusWidget"] {visibility: hidden; display: none !important;}
 
-    /* 2. توحيد الخلفية السودة ومنع أي مساحات بيضاء في الصفحة كلها */
+    /* توحيد الخلفية السودة */
     [data-testid="stAppViewContainer"], [data-testid="stHeader"], [data-testid="stMainViewContainer"] {
         background-color: #0E1117 !important;
     }
     
-    /* 3. جعل كل النصوص واضحة باللون الأبيض */
+    /* نصوص واضحة بيضاء */
     p, span, div, label {
         color: #FFFFFF !important;
         font-weight: 500;
     }
 
-    /* 4. ستايل العنوان النيوني */
+    /* العنوان النيوني */
     h1 {
         color: #00F2FF !important;
         text-shadow: 0px 0px 15px #00F2FF;
@@ -37,7 +36,7 @@ st.markdown(r"""
         margin-top: -50px;
     }
 
-    /* 5. فقاعات الدردشة النيون */
+    /* فقاعات الدردشة */
     .stChatMessage {
         background-color: #161B22 !important;
         border: 1px solid #00F2FF33 !important;
@@ -45,14 +44,14 @@ st.markdown(r"""
         box-shadow: 0 0 10px #00F2FF11;
     }
 
-    /* 6. الحل النهائي لمشكلة الأبيض في الأسفل (تم مسح الـ Container الخارجي) */
+    /* إخفاء الأبيض في الأسفل */
     div[data-testid="stChatInputContainer"] {
         background-color: transparent !important;
         border: none !important;
         padding-bottom: 20px;
     }
 
-    /* ستايل مستطيل الكتابة النيون */
+    /* مستطيل الكتابة النيون */
     [data-testid="stChatInput"] textarea {
         color: #FFFFFF !important;
         background-color: #161B22 !important;
@@ -67,18 +66,13 @@ st.markdown(r"""
         background-color: transparent !important;
     }
 
-    /* 7. الشاشة الافتتاحية (Splash Screen) النيون */
+    /* الشاشة الافتتاحية */
     #splash-screen {
         position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
+        top: 0; left: 0; width: 100vw; height: 100vh;
         background-color: #0E1117;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
+        display: flex; flex-direction: column;
+        justify-content: center; align-items: center;
         z-index: 9999;
         animation: fadeOut 2.5s forwards;
         pointer-events: none;
@@ -117,16 +111,19 @@ except KeyError:
 
 client = Groq(api_key=GROQ_API_KEY)
 
-# 3. تهيئة الذاكرة والدستور
+# 3. تهيئة الذاكرة والدستور الصارم
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
+# هنا ضفت لك القواعد اللي تمنع الصيني والرموز والأخطاء الإملائية
 system_identity = """
 أنت فكرة AI (Fekra AI)، المساعد الذكي والمبتكر الذي طوره المبرمج أحمد وائل (الحريف).
-قواعد الهوية:
-- إذا سألك المستخدم عن اسمك أو من أنت، قل: "أنا فكرة AI، طورني المبرمج أحمد وائل الحريف".
-- في الأسئلة العادية، جاوب مباشرة دون تكرار التعريف بنفسك.
-تحدث بلهجة مصرية ذكية وقريبة من "الحريف".
+قواعد صارمة للإجابة:
+1. اللغة: تحدث بلهجة مصرية بيضاء واضحة ومفهومة.
+2. الجودة: ممنوع تماماً استخدام أي حروف صينية، يابانية، أو أي لغات غير العربية والإنجليزية.
+3. الرموز: تجنب استخدام الرموز الغريبة أو الزخارف التي تعطل القراءة.
+4. الإملاء: راجع كلماتك لتجنب أي أخطاء إملائية.
+5. الهوية: إذا سُئلت عن هويتك، قل: "أنا فكرة AI، طورني المبرمج أحمد وائل الحريف".
 """
 
 # 4. عرض رسائل الدردشة
