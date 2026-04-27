@@ -8,10 +8,10 @@ st.set_page_config(
     layout="centered"
 )
 
-# الستايل النيون (Ultra Clean) - إخفاء كل براندات استريمليت والحواف البيضاء
+# الستايل النيون (Ultra Clean) - إخفاء كل زوائد استريمليت والحواف البيضاء
 st.markdown(r"""
     <style>
-    /* 1. إخفاء زوائد استريمليت */
+    /* 1. إخفاء زوائد استريمليت والإعلانات */
     footer {visibility: hidden; height: 0%;}
     header {visibility: hidden;}
     #MainMenu {visibility: hidden;}
@@ -20,7 +20,7 @@ st.markdown(r"""
     [data-testid="stStatusWidget"] {visibility: hidden; display: none !important;}
     .stDeployButton {display:none !important;}
 
-    /* 2. توحيد الخلفية السودة في كل مكان */
+    /* 2. توحيد الخلفية السودة في كل مكان لمنع أي بياض تحت */
     [data-testid="stAppViewContainer"], 
     [data-testid="stHeader"], 
     [data-testid="stMainViewContainer"],
@@ -73,7 +73,7 @@ st.markdown(r"""
         background-color: transparent !important;
     }
 
-    /* 8. الشاشة الافتتاحية (Splash Screen) */
+    /* 8. الشاشة الافتتاحية */
     #splash-screen {
         position: fixed;
         top: 0; left: 0; width: 100vw; height: 100vh;
@@ -113,19 +113,61 @@ st.markdown("<p style='text-align: center; color: #808495 !important;'>نسخة 
 try:
     GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
 except KeyError:
-    st.error("تأكد من إضافة GROQ_API_KEY في Secrets!")
+    st.error("يا حريف، تأكد من إضافة GROQ_API_KEY في Secrets!")
     st.stop()
 
 client = Groq(api_key=GROQ_API_KEY)
 
-# 3. تهيئة الذاكرة والدستور الصارم جداً
+# 3. تهيئة الذاكرة ودستور الجودة (منع الصيني والأخطاء)
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# تحديث الدستور لضمان نظافة المخرجات
 system_identity = """
-أنت فكرة AI (Fekra AI)، المساعد الذكي والمبتكر الذي طوره المبرمج أحمد وائل (الحريف).
-قواعد العمل الإلزامية:
-1. اللغة الأساسية: اللهجة المصرية المفهومة "الحريفة".
-2. ممنوعات لغوية: يمنع منعاً باتاً استخدام أي رموز صينية، يابانية، أو رموز غريبة غير مفهومة.
-3. دقة الإملاء: يجب أن تكون الإجابات خالية تماماً من الأخطاء الإملائية وال
+أنت فكرة AI (Fekra AI)، المساعد المبدع الذي طوره المبرمج أحمد وائل (الحريف).
+قواعد لغوية صارمة:
+1. تحدث بلهجة مصرية "حريفة" وذكية جداً.
+2. يمنع منعاً باتاً استخدام أي حروف صينية أو يابانية أو رموز تقنية مجهولة في الردود.
+3. التزم بالدقة الإملائية التامة في اللغة العربية؛ لا تترك أي أخطاء أو كلمات مشوهة.
+4. الردود يجب أن تكون نظيفة ومنظمة وسهلة القراءة.
+5. هويتك هي "فكرة AI" من ابتكار أحمد وائل الحريف فقط.
+"""
+
+# 4. عرض رسائل الدردشة
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+
+# 5. منطقة الإدخال والرد
+if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.markdown(prompt)
+
+    with st.chat_message("assistant"):
+        message_placeholder = st.empty()
+        full_response = ""
+        
+        try:
+            messages_to_send = [{"role": "system", "content": system_identity}] + [
+                {"role": m["role"], "content": m["content"]}
+                for m in st.session_state.messages
+            ]
+
+            completion = client.chat.completions.create(
+                model="llama-3.3-70b-versatile", 
+                messages=messages_to_send,
+                stream=True,
+            )
+
+            for chunk in completion:
+                content = chunk.choices[0].delta.content
+                if content:
+                    full_response += str(content)
+                    message_placeholder.markdown(full_response + "▌")
+            
+            message_placeholder.markdown(full_response)
+            st.session_state.messages.append({"role": "assistant", "content": full_response})
+            
+        except Exception as e:
+            st.error(f"حصلت مشكلة فنية يا حريف: {str(e)}")
+            
