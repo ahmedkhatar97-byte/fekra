@@ -8,35 +8,34 @@ st.set_page_config(
     layout="centered"
 )
 
-# الستايل النيون (Final Version) - إبادة اللون الأبيض تماماً من الأسفل
+# الستايل النيون (Ultra Clean) - إخفاء كل براندات استريمليت
 st.markdown(r"""
     <style>
-    /* 1. إخفاء الزوائد والاسبينر */
+    /* 1. إخفاء كل زوائد استريمليت (القائمة، الهيدر، الفوتر، زرار الديبلوى) */
     footer {visibility: hidden; height: 0%;}
     header {visibility: hidden;}
     #MainMenu {visibility: hidden;}
+    [data-testid="stToolbar"] {visibility: hidden !important; display: none !important;}
+    [data-testid="stDecoration"] {display: none !important;}
     [data-testid="stStatusWidget"] {visibility: hidden; display: none !important;}
+    .stDeployButton {display:none !important;}
 
-    /* 2. توحيد الخلفية السودة في كل مكان */
+    /* 2. توحيد الخلفية السودة في كل مكان ومنع أي بياض */
     [data-testid="stAppViewContainer"], 
     [data-testid="stHeader"], 
     [data-testid="stMainViewContainer"],
-    [data-testid="stBottom"] {
+    [data-testid="stBottom"],
+    [data-testid="stBottomBlockContainer"] {
         background-color: #0E1117 !important;
     }
     
-    /* 3. الحل السحري لإخفاء المستطيل الأبيض الكبير اللي ورا الشات */
-    div[data-testid="stBottomBlockContainer"] {
-        background-color: transparent !important;
-    }
-
-    /* 4. جعل النصوص واضحة باللون الأبيض */
+    /* 3. نصوص واضحة نيون */
     p, span, div, label {
         color: #FFFFFF !important;
         font-weight: 500;
     }
 
-    /* 5. ستايل العنوان النيوني */
+    /* 4. العنوان النيوني */
     h1 {
         color: #00F2FF !important;
         text-shadow: 0px 0px 15px #00F2FF;
@@ -44,7 +43,7 @@ st.markdown(r"""
         margin-top: -50px;
     }
 
-    /* 6. فقاعات الدردشة */
+    /* 5. فقاعات الدردشة النيون */
     .stChatMessage {
         background-color: #161B22 !important;
         border: 1px solid #00F2FF33 !important;
@@ -52,13 +51,14 @@ st.markdown(r"""
         box-shadow: 0 0 10px #00F2FF11;
     }
 
-    /* 7. تظبيط مستطيل الكتابة النيون وإلغاء أي حواف بيضاء */
+    /* 6. إخفاء حاوية الإدخال البيضاء */
     div[data-testid="stChatInputContainer"] {
         background-color: transparent !important;
         border: none !important;
         padding: 10px 0px !important;
     }
 
+    /* 7. ستايل مستطيل الكتابة */
     [data-testid="stChatInput"] textarea {
         color: #FFFFFF !important;
         background-color: #161B22 !important;
@@ -73,7 +73,7 @@ st.markdown(r"""
         background-color: transparent !important;
     }
 
-    /* 8. الشاشة الافتتاحية النيون */
+    /* 8. الشاشة الافتتاحية */
     #splash-screen {
         position: fixed;
         top: 0; left: 0; width: 100vw; height: 100vh;
@@ -113,7 +113,7 @@ st.markdown("<p style='text-align: center; color: #808495 !important;'>نسخة 
 try:
     GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
 except KeyError:
-    st.error("يا حريف، ضيف مفتاح الـ API في الـ Secrets الأول!")
+    st.error("تأكد من إضافة GROQ_API_KEY في Secrets!")
     st.stop()
 
 client = Groq(api_key=GROQ_API_KEY)
@@ -122,14 +122,13 @@ client = Groq(api_key=GROQ_API_KEY)
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# الدستور لمنع الصيني والرموز وضمان جودة الإملاء
 system_identity = """
 أنت فكرة AI (Fekra AI)، المساعد الذكي والمبتكر الذي طوره المبرمج أحمد وائل (الحريف).
 قواعد صارمة:
-1. اللغة: تحدث بلهجة مصرية واضحة وذكية تناسب شخصية الحريف.
+1. اللغة: تحدث بلهجة مصرية "حريفة" وواضحة.
 2. الجودة: ممنوع استخدام أي حروف صينية أو يابانية أو رموز غريبة.
-3. الإملاء: اكتب لغة عربية سليمة إملائياً بدون أخطاء.
-4. الهوية: إذا سُئلت، أنت "فكرة AI" من تطوير أحمد وائل الحريف.
+3. الإملاء: اكتب لغة عربية صحيحة إملائياً.
+4. الهوية: أنت فكرة AI، إبداع المبرمج أحمد وائل الحريف.
 """
 
 # 4. عرض رسائل الدردشة
@@ -169,5 +168,5 @@ if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
             st.session_state.messages.append({"role": "assistant", "content": full_response})
             
         except Exception as e:
-            st.error(f"حصلت مشكلة فنية يا حريف: {str(e)}")
+            st.error(f"حدث خطأ يا حريف: {str(e)}")
             
