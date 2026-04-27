@@ -8,10 +8,10 @@ st.set_page_config(
     layout="centered"
 )
 
-# الستايل النيون (Ultra Clean) - إخفاء كل براندات استريمليت
+# الستايل النيون (Ultra Clean) - إخفاء كل براندات استريمليت والحواف البيضاء
 st.markdown(r"""
     <style>
-    /* 1. إخفاء كل زوائد استريمليت (القائمة، الهيدر، الفوتر، زرار الديبلوى) */
+    /* 1. إخفاء زوائد استريمليت */
     footer {visibility: hidden; height: 0%;}
     header {visibility: hidden;}
     #MainMenu {visibility: hidden;}
@@ -20,7 +20,7 @@ st.markdown(r"""
     [data-testid="stStatusWidget"] {visibility: hidden; display: none !important;}
     .stDeployButton {display:none !important;}
 
-    /* 2. توحيد الخلفية السودة في كل مكان ومنع أي بياض */
+    /* 2. توحيد الخلفية السودة في كل مكان */
     [data-testid="stAppViewContainer"], 
     [data-testid="stHeader"], 
     [data-testid="stMainViewContainer"],
@@ -51,14 +51,14 @@ st.markdown(r"""
         box-shadow: 0 0 10px #00F2FF11;
     }
 
-    /* 6. إخفاء حاوية الإدخال البيضاء */
+    /* 6. إخفاء حاوية الإدخال البيضاء تماماً */
     div[data-testid="stChatInputContainer"] {
         background-color: transparent !important;
         border: none !important;
         padding: 10px 0px !important;
     }
 
-    /* 7. ستايل مستطيل الكتابة */
+    /* 7. ستايل مستطيل الكتابة النيون */
     [data-testid="stChatInput"] textarea {
         color: #FFFFFF !important;
         background-color: #161B22 !important;
@@ -73,7 +73,7 @@ st.markdown(r"""
         background-color: transparent !important;
     }
 
-    /* 8. الشاشة الافتتاحية */
+    /* 8. الشاشة الافتتاحية (Splash Screen) */
     #splash-screen {
         position: fixed;
         top: 0; left: 0; width: 100vw; height: 100vh;
@@ -118,55 +118,14 @@ except KeyError:
 
 client = Groq(api_key=GROQ_API_KEY)
 
-# 3. تهيئة الذاكرة والدستور الصارم
+# 3. تهيئة الذاكرة والدستور الصارم جداً
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
+# تحديث الدستور لضمان نظافة المخرجات
 system_identity = """
 أنت فكرة AI (Fekra AI)، المساعد الذكي والمبتكر الذي طوره المبرمج أحمد وائل (الحريف).
-قواعد صارمة:
-1. اللغة: تحدث بلهجة مصرية "حريفة" وواضحة.
-2. الجودة: ممنوع استخدام أي حروف صينية أو يابانية أو رموز غريبة.
-3. الإملاء: اكتب لغة عربية صحيحة إملائياً.
-4. الهوية: أنت فكرة AI، إبداع المبرمج أحمد وائل الحريف.
-"""
-
-# 4. عرض رسائل الدردشة
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
-
-# 5. منطقة الإدخال والرد
-if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.markdown(prompt)
-
-    with st.chat_message("assistant"):
-        message_placeholder = st.empty()
-        full_response = ""
-        
-        try:
-            messages_to_send = [{"role": "system", "content": system_identity}] + [
-                {"role": m["role"], "content": m["content"]}
-                for m in st.session_state.messages
-            ]
-
-            completion = client.chat.completions.create(
-                model="llama-3.3-70b-versatile", 
-                messages=messages_to_send,
-                stream=True,
-            )
-
-            for chunk in completion:
-                content = chunk.choices[0].delta.content
-                if content:
-                    full_response += str(content)
-                    message_placeholder.markdown(full_response + "▌")
-            
-            message_placeholder.markdown(full_response)
-            st.session_state.messages.append({"role": "assistant", "content": full_response})
-            
-        except Exception as e:
-            st.error(f"حدث خطأ يا حريف: {str(e)}")
-            
+قواعد العمل الإلزامية:
+1. اللغة الأساسية: اللهجة المصرية المفهومة "الحريفة".
+2. ممنوعات لغوية: يمنع منعاً باتاً استخدام أي رموز صينية، يابانية، أو رموز غريبة غير مفهومة.
+3. دقة الإملاء: يجب أن تكون الإجابات خالية تماماً من الأخطاء الإملائية وال
