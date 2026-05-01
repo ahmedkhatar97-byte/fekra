@@ -11,7 +11,6 @@ st.set_page_config(
 # الستايل النيون (Ultra Clean) - إخفاء كل زوائد استريمليت والحواف البيضاء
 st.markdown(r"""
     <style>
-    /* 1. إخفاء زوائد استريمليت والإعلانات */
     footer {visibility: hidden; height: 0%;}
     header {visibility: hidden;}
     #MainMenu {visibility: hidden;}
@@ -20,7 +19,6 @@ st.markdown(r"""
     [data-testid="stStatusWidget"] {visibility: hidden; display: none !important;}
     .stDeployButton {display:none !important;}
 
-    /* 2. توحيد الخلفية السودة في كل مكان لمنع أي بياض تحت */
     [data-testid="stAppViewContainer"], 
     [data-testid="stHeader"], 
     [data-testid="stMainViewContainer"],
@@ -29,13 +27,11 @@ st.markdown(r"""
         background-color: #0E1117 !important;
     }
     
-    /* 3. نصوص واضحة نيون */
     p, span, div, label {
         color: #FFFFFF !important;
         font-weight: 500;
     }
 
-    /* 4. العنوان النيوني */
     h1 {
         color: #00F2FF !important;
         text-shadow: 0px 0px 15px #00F2FF;
@@ -43,7 +39,6 @@ st.markdown(r"""
         margin-top: -50px;
     }
 
-    /* 5. فقاعات الدردشة النيون */
     .stChatMessage {
         background-color: #161B22 !important;
         border: 1px solid #00F2FF33 !important;
@@ -51,14 +46,12 @@ st.markdown(r"""
         box-shadow: 0 0 10px #00F2FF11;
     }
 
-    /* 6. إخفاء حاوية الإدخال البيضاء تماماً */
     div[data-testid="stChatInputContainer"] {
         background-color: transparent !important;
         border: none !important;
         padding: 10px 0px !important;
     }
 
-    /* 7. ستايل مستطيل الكتابة النيون */
     [data-testid="stChatInput"] textarea {
         color: #FFFFFF !important;
         background-color: #161B22 !important;
@@ -73,7 +66,6 @@ st.markdown(r"""
         background-color: transparent !important;
     }
 
-    /* 8. الشاشة الافتتاحية */
     #splash-screen {
         position: fixed;
         top: 0; left: 0; width: 100vw; height: 100vh;
@@ -118,18 +110,19 @@ except KeyError:
 
 client = Groq(api_key=GROQ_API_KEY)
 
-# 3. تهيئة الذاكرة ودستور الجودة (منع الصيني والأخطاء)
+# 3. تهيئة الذاكرة ودستور الجودة "الصارم جداً"
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
+# تحديث دستور الجودة ليكون "قاطعاً" في الأخطاء
 system_identity = """
-أنت فكرة AI (Fekra AI)، المساعد المبدع الذي طوره المبرمج أحمد وائل (الحريف).
-قواعد لغوية صارمة:
-1. تحدث بلهجة مصرية "حريفة" وذكية جداً.
-2. يمنع منعاً باتاً استخدام أي حروف صينية أو يابانية أو رموز تقنية مجهولة في الردود.
-3. التزم بالدقة الإملائية التامة في اللغة العربية؛ لا تترك أي أخطاء أو كلمات مشوهة.
-4. الردود يجب أن تكون نظيفة ومنظمة وسهلة القراءة.
-5. هويتك هي "فكرة AI" من ابتكار أحمد وائل الحريف فقط.
+أنت (Fekra AI)، المساعد الذكي المبتكر الذي صممه المبرمج أحمد وائل (الحريف).
+بروتوكول الرد الإلزامي:
+1. اللغة: تحدث بلهجة مصرية "حريفة" وسلسة، لكن بكلمات واضحة ومنظمة.
+2. منع الأخطاء: يمنع منعاً باتاً تكرار الحروف بشكل عشوائي أو إضافة حروف زائدة في نهاية الكلمات.
+3. التصفية: لا تستخدم أي حروف صينية، يابانية، أو رموز تقنية غريبة تماماً.
+4. التدقيق الإملائي: راجع كل كلمة إملائياً قبل عرضها. يجب أن يكون النص العربي سليماً 100%.
+5. الدقة: إذا كان السؤال تقنياً، أجب بدقة واختصار دون ثرثرة زائدة قد تؤدي لأخطاء كتابية.
 """
 
 # 4. عرض رسائل الدردشة
@@ -153,10 +146,13 @@ if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
                 for m in st.session_state.messages
             ]
 
+            # تعديل الإعدادات لتقليل الأخطاء (temperature=0.4)
             completion = client.chat.completions.create(
                 model="llama-3.3-70b-versatile", 
                 messages=messages_to_send,
                 stream=True,
+                temperature=0.4, # تقليل العشوائية لمنع الأخطاء الإملائية
+                max_tokens=1024
             )
 
             for chunk in completion:
@@ -169,5 +165,5 @@ if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
             st.session_state.messages.append({"role": "assistant", "content": full_response})
             
         except Exception as e:
-            st.error(f"حصلت مشكلة فنية يا حريف: {str(e)}")
-            
+            st.error(f"حدث خطأ يا حريف: {str(e)}")
+        
