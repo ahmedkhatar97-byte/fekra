@@ -1,5 +1,6 @@
 import streamlit as st
 from groq import Groq
+from duckduckgo_search import DDGS  # مكتبة البحث
 
 # 1. إعدادات الصفحة
 st.set_page_config(
@@ -8,7 +9,7 @@ st.set_page_config(
     layout="centered"
 )
 
-# الستايل النيون (Ultra Clean) - إخفاء كل زوائد استريمليت والحواف البيضاء
+# الستايل النيون (المعتمد)
 st.markdown(r"""
     <style>
     footer {visibility: hidden; height: 0%;}
@@ -99,7 +100,7 @@ st.markdown(r"""
     """, unsafe_allow_html=True)
 
 st.title("💡 Fekra AI")
-st.markdown("<p style='text-align: center; color: #808495 !important;'>نسخة الحريف الشاملة | ذكاء بلا حدود</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #808495 !important;'>نسخة الحريف المتصلة بالإنترنت</p>", unsafe_allow_html=True)
 
 # 2. جلب مفتاح الـ API
 try:
@@ -110,27 +111,34 @@ except KeyError:
 
 client = Groq(api_key=GROQ_API_KEY)
 
-# 3. تهيئة الذاكرة ودستور الجودة "الصارم جداً"
+# 3. دالة البحث في الإنترنت
+def search_the_web(query):
+    try:
+        with DDGS() as ddgs:
+            results = [r['body'] for r in ddgs.text(query, max_results=3)]
+            return "\n".join(results)
+    except:
+        return "عذراً يا حريف، لم أستطع الوصول للإنترنت حالياً."
+
+# 4. تهيئة الذاكرة ودستور الجودة
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# تحديث دستور الجودة ليكون "قاطعاً" في الأخطاء
 system_identity = """
-أنت (Fekra AI)، المساعد الذكي المبتكر الذي صممه المبرمج أحمد وائل (الحريف).
-بروتوكول الرد الإلزامي:
-1. اللغة: تحدث بلهجة مصرية "حريفة" وسلسة، لكن بكلمات واضحة ومنظمة.
-2. منع الأخطاء: يمنع منعاً باتاً تكرار الحروف بشكل عشوائي أو إضافة حروف زائدة في نهاية الكلمات.
-3. التصفية: لا تستخدم أي حروف صينية، يابانية، أو رموز تقنية غريبة تماماً.
-4. التدقيق الإملائي: راجع كل كلمة إملائياً قبل عرضها. يجب أن يكون النص العربي سليماً 100%.
-5. الدقة: إذا كان السؤال تقنياً، أجب بدقة واختصار دون ثرثرة زائدة قد تؤدي لأخطاء كتابية.
+أنت (Fekra AI)، المساعد الذكي المتصل بالإنترنت الذي صممه أحمد وائل (الحريف).
+بروتوكول الرد:
+1. اللغة: لهجة مصرية "حريفة" ونظيفة جداً بلا أخطاء إملائية.
+2. البحث: استخدم المعلومات المتاحة لك من الإنترنت للرد على الأخبار أو المعلومات الحديثة.
+3. الجودة: ممنوع تكرار الحروف أو استخدام حروف صينية/يابانية نهائياً.
+4. الإيجاز: كن ذكياً ومباشراً في إجاباتك.
 """
 
-# 4. عرض رسائل الدردشة
+# 5. عرض رسائل الدردشة
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# 5. منطقة الإدخال والرد
+# 6. منطقة الإدخال والرد
 if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
@@ -140,19 +148,23 @@ if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
         message_placeholder = st.empty()
         full_response = ""
         
+        # خطوة البحث: لو السؤال محتاج معلومات حديثة
+        search_context = ""
+        if any(word in prompt.lower() for word in ["اخبار", "سعر", "ماتش", "طقس", "اليوم", "مين", "ايه هو"]):
+            with st.spinner("بيبحث عشانك يا حريف..."):
+                search_context = f"\n\nمعلومات من الإنترنت للرد على المستخدم:\n{search_the_web(prompt)}"
+
         try:
-            messages_to_send = [{"role": "system", "content": system_identity}] + [
+            messages_to_send = [{"role": "system", "content": system_identity + search_context}] + [
                 {"role": m["role"], "content": m["content"]}
                 for m in st.session_state.messages
             ]
 
-            # تعديل الإعدادات لتقليل الأخطاء (temperature=0.4)
             completion = client.chat.completions.create(
                 model="llama-3.3-70b-versatile", 
                 messages=messages_to_send,
                 stream=True,
-                temperature=0.4, # تقليل العشوائية لمنع الأخطاء الإملائية
-                max_tokens=1024
+                temperature=0.4,
             )
 
             for chunk in completion:
@@ -165,5 +177,5 @@ if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
             st.session_state.messages.append({"role": "assistant", "content": full_response})
             
         except Exception as e:
-            st.error(f"حدث خطأ يا حريف: {str(e)}")
-        
+            st.error(f"حدث خطأ فني: {str(e)}")
+            
