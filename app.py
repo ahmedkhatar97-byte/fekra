@@ -1,6 +1,7 @@
 import streamlit as st
 from groq import Groq
-from duckduckgo_search import DDGS  # مكتبة البحث
+from duckduckgo_search import DDGS
+from datetime import datetime # عشان التاريخ يبقى مظبوط بالملي
 
 # 1. إعدادات الصفحة
 st.set_page_config(
@@ -9,7 +10,7 @@ st.set_page_config(
     layout="centered"
 )
 
-# الستايل النيون (المعتمد)
+# الستايل النيون (المعتمد والأنيق)
 st.markdown(r"""
     <style>
     footer {visibility: hidden; height: 0%;}
@@ -100,37 +101,41 @@ st.markdown(r"""
     """, unsafe_allow_html=True)
 
 st.title("💡 Fekra AI")
-st.markdown("<p style='text-align: center; color: #808495 !important;'>نسخة الحريف المتصلة بالإنترنت</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #808495 !important;'>نسخة الحريف الذكية | بحث مباشر</p>", unsafe_allow_html=True)
 
 # 2. جلب مفتاح الـ API
 try:
     GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
 except KeyError:
-    st.error("يا حريف، تأكد من إضافة GROQ_API_KEY في Secrets!")
+    st.error("يا حريف، ضيف مفتاح الـ API في الـ Secrets!")
     st.stop()
 
 client = Groq(api_key=GROQ_API_KEY)
 
-# 3. دالة البحث في الإنترنت
-def search_the_web(query):
+# 3. دالة البحث المحسنة
+def get_latest_info(query):
     try:
         with DDGS() as ddgs:
-            results = [r['body'] for r in ddgs.text(query, max_results=3)]
+            # زودنا عدد النتائج وبحثنا بشكل أدق
+            results = [f"- {r['body']}" for r in ddgs.text(query, max_results=5)]
             return "\n".join(results)
-    except:
-        return "عذراً يا حريف، لم أستطع الوصول للإنترنت حالياً."
+    except Exception:
+        return "للأسف مش قادر أوصل للإنترنت حالياً يا حريف."
 
-# 4. تهيئة الذاكرة ودستور الجودة
+# 4. تهيئة الذاكرة والدستور الصارم
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-system_identity = """
-أنت (Fekra AI)، المساعد الذكي المتصل بالإنترنت الذي صممه أحمد وائل (الحريف).
-بروتوكول الرد:
-1. اللغة: لهجة مصرية "حريفة" ونظيفة جداً بلا أخطاء إملائية.
-2. البحث: استخدم المعلومات المتاحة لك من الإنترنت للرد على الأخبار أو المعلومات الحديثة.
-3. الجودة: ممنوع تكرار الحروف أو استخدام حروف صينية/يابانية نهائياً.
-4. الإيجاز: كن ذكياً ومباشراً في إجاباتك.
+# الحصول على تاريخ اللحظة الحالية
+current_date = datetime.now().strftime("%Y-%m-%d")
+
+system_identity = f"""
+أنت (Fekra AI)، مساعد ذكي ابتكره أحمد وائل (الحريف).
+قواعد صارمة:
+1. التاريخ الحالي هو: {current_date}. اعتمد عليه دائماً لمعرفة الأيام.
+2. إذا سألك المستخدم عن أخبار أو نتائج ماتشات أو أي شيء حديث، اعتمد كلياً على "نتائج البحث" التي سأزودك بها وتجاهل معلوماتك القديمة.
+3. اللغة: مصرية حريفة، واضحة، وبدون أخطاء إملائية نهائياً.
+4. الجودة: ممنوع الحروف الصينية أو الرموز الغريبة.
 """
 
 # 5. عرض رسائل الدردشة
@@ -148,14 +153,20 @@ if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
         message_placeholder = st.empty()
         full_response = ""
         
-        # خطوة البحث: لو السؤال محتاج معلومات حديثة
-        search_context = ""
-        if any(word in prompt.lower() for word in ["اخبار", "سعر", "ماتش", "طقس", "اليوم", "مين", "ايه هو"]):
-            with st.spinner("بيبحث عشانك يا حريف..."):
-                search_context = f"\n\nمعلومات من الإنترنت للرد على المستخدم:\n{search_the_web(prompt)}"
+        # تحسين ذكاء البحث
+        search_results = ""
+        if any(word in prompt.lower() for word in ["ماتش", "الاهلي", "نتيجة", "اخبار", "سعر", "النهاردة", "امبارح"]):
+            with st.status("بيجيب لك الخلاصة يا حريف...", expanded=False):
+                search_results = get_latest_info(prompt)
+                st.write("تم البحث وتحديث المعلومات!")
+
+        # دمج نتائج البحث في سياق الموديل بشكل إجباري
+        full_context = system_identity
+        if search_results:
+            full_context += f"\n\nأحدث معلومات من الإنترنت بخصوص سؤال المستخدم:\n{search_results}\n\nالتزم بالمعلومات دي في ردك."
 
         try:
-            messages_to_send = [{"role": "system", "content": system_identity + search_context}] + [
+            messages_to_send = [{"role": "system", "content": full_context}] + [
                 {"role": m["role"], "content": m["content"]}
                 for m in st.session_state.messages
             ]
@@ -164,7 +175,7 @@ if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
                 model="llama-3.3-70b-versatile", 
                 messages=messages_to_send,
                 stream=True,
-                temperature=0.4,
+                temperature=0.3, # قللنا الحرارة أكتر لمنع التخريف
             )
 
             for chunk in completion:
@@ -177,5 +188,5 @@ if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
             st.session_state.messages.append({"role": "assistant", "content": full_response})
             
         except Exception as e:
-            st.error(f"حدث خطأ فني: {str(e)}")
+            st.error(f"حصلت مشكلة: {str(e)}")
             
