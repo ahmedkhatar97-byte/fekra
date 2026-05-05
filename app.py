@@ -50,24 +50,33 @@ except:
     st.error("تأكد من إضافة المفاتيح في الـ Secrets!")
     st.stop()
 
-# 3. وظيفة تقييم الحاجة للبحث
+# 3. وظيفة تقييم الحاجة للبحث (مع منطق الأشخاص والأوامر)
 def check_if_needs_search(user_query):
-    # الموديل بيقرر هل السؤال محتاج بحث ولا لأ
-    decision_prompt = f"Does the following user query require real-time internet search for up-to-date information (like news, sports results, prices, etc.)? Answer ONLY with 'YES' or 'NO'. Query: {user_query}"
+    # كلمات تجبره على البحث
+    force_search_words = ["ابحث", "دور", "search", "غلط", "مين هو", "مين هي", "تعرف اية عن"]
+    if any(word in user_query.lower() for word in force_search_words):
+        return "YES"
+    
+    # استثناء مطورك
+    is_about_creator = any(name in user_query.lower() for name in ["احمد وائل", "أحمد وائل", "حريف", "الحريف"])
+    if is_about_creator:
+        return "NO"
+
+    decision_prompt = f"Does the following query require an internet search for current facts, news, or info about a person? Answer ONLY 'YES' or 'NO'. Query: {user_query}"
     response = client.chat.completions.create(
-        model="llama-3.1-8b-instant", # موديل خفيف وسريع للقرار
+        model="llama-3.1-8b-instant",
         messages=[{"role": "user", "content": decision_prompt}],
         temperature=0
     )
     return response.choices[0].message.content.strip().upper()
 
-# 4. دالة البحث المتقدمة
+# 4. دالة البحث
 def deep_search(query):
     try:
         response = tavily.search(query=query, search_depth="advanced", max_results=6)
         return "\n".join([f"- {r['content']}" for r in response['results']])
     except:
-        return ""
+        return "فشلت عملية البحث."
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -87,29 +96,24 @@ if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
     with st.chat_message("assistant"):
         message_placeholder = st.empty()
         
-        # استثناء اسم المطور من أي بحث
-        is_about_creator = any(name in prompt.lower() for name in ["احمد وائل", "أحمد وائل", "حريف", "الحريف", "مين اللي عملك"])
+        # اتخاذ القرار
+        needs_search = check_if_needs_search(prompt)
         
         search_data = ""
-        if not is_about_creator:
-            # هنا الموديل بيقرر: يبحث ولا ملوش لزمة؟
-            with st.spinner("بيفكر هل محتاج يبحث..."):
-                needs_search = check_if_needs_search(prompt)
-            
-            if "YES" in needs_search:
-                with st.status("بيجيب لك المعلومات الأكيدة من النت...", expanded=False):
-                    search_data = deep_search(prompt)
+        if "YES" in needs_search:
+            with st.status("بيجيب لك الخبر اليقين...", expanded=False):
+                search_data = deep_search(prompt)
         
         system_prompt = f"""
         أنت (Fekra AI)، المساعد الذكي الخارق. مطورك هو المبرمج أحمد وائل (الحريف).
-        التاريخ الحالي: {current_date}.
-        معلومات البحث الحقيقية (إن وجدت):
+        التاريخ: {current_date}.
+        معلومات البحث المتاحة:
         {search_data}
         
         القواعد:
-        1. خاطب المستخدم بـ "يا حريف".
-        2. لو فيه معلومات بحث، التزم بالدقة الإملائية والنتائج الصحيحة 100%.
-        3. لو مفيش معلومات بحث، رد من معرفتك فوراً.
+        1. نادِ المستخدم بـ "يا حريف".
+        2. لو فيه بحث، جاوب بدقة بناءً عليه. لو سألك عن شخص غير مطورك، استخدم نتائج البحث.
+        3. لو مطورك قالك "غلط ابحث"، اعتذر بذكاء واستخدم نتائج البحث الجديدة لتصحيح المعلومة.
         4. اللهجة: مصرية حريفة.
         """
 
