@@ -50,40 +50,27 @@ except:
     st.error("تأكد من إضافة المفاتيح في الـ Secrets!")
     st.stop()
 
-# 3. وظيفة تقييم الحاجة للبحث (مع منطق الأشخاص والأوامر)
-def check_if_needs_search(user_query):
-    # كلمات تجبره على البحث
-    force_search_words = ["ابحث", "دور", "search", "غلط", "مين هو", "مين هي", "تعرف اية عن"]
-    if any(word in user_query.lower() for word in force_search_words):
-        return "YES"
-    
-    # استثناء مطورك
-    is_about_creator = any(name in user_query.lower() for name in ["احمد وائل", "أحمد وائل", "حريف", "الحريف"])
-    if is_about_creator:
-        return "NO"
-
-    decision_prompt = f"Does the following query require an internet search for current facts, news, or info about a person? Answer ONLY 'YES' or 'NO'. Query: {user_query}"
-    response = client.chat.completions.create(
-        model="llama-3.1-8b-instant",
-        messages=[{"role": "user", "content": decision_prompt}],
-        temperature=0
-    )
-    return response.choices[0].message.content.strip().upper()
-
-# 4. دالة البحث
-def deep_search(query):
+# 3. وظيفة البحث المتطور (Advanced Person & Context Search)
+def improved_search(query):
     try:
-        response = tavily.search(query=query, search_depth="advanced", max_results=6)
-        return "\n".join([f"- {r['content']}" for r in response['results']])
-    except:
-        return "فشلت عملية البحث."
+        # بنضيف كلمات بتخلي محرك البحث يركز على السوشيال ميديا والشهرة
+        optimized_query = f"{query} profile social media biography channel youtube tiktok info"
+        response = tavily.search(
+            query=optimized_query, 
+            search_depth="advanced", 
+            max_results=8, 
+            include_raw_content=False
+        )
+        return "\n".join([f"مصدر: {r['title']} - {r['content']}" for r in response['results']])
+    except Exception as e:
+        return f"خطأ في البحث: {str(e)}"
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
 current_date = datetime.now().strftime("%Y-%m-%d")
 
-# 5. معالجة الإدخال
+# 4. معالجة الإدخال والردود
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
@@ -96,25 +83,30 @@ if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
     with st.chat_message("assistant"):
         message_placeholder = st.empty()
         
-        # اتخاذ القرار
-        needs_search = check_if_needs_search(prompt)
+        # كلمات تجبر الموديل يبحث فوراً عن أشخاص أو مشاهير
+        search_triggers = ["مين هو", "مين هي", "مين فلان", "تعرف اية عن", "يوتيوبر", "تيك توكر", "مشهور", "لاعب", "فنان", "غلط ابحث"]
+        needs_search = any(word in prompt.lower() for word in search_triggers)
+        
+        # استثناء مطورك من البحث
+        is_about_creator = any(name in prompt.lower() for name in ["احمد وائل", "أحمد وائل", "حريف", "الحريف"])
         
         search_data = ""
-        if "YES" in needs_search:
-            with st.status("بيجيب لك الخبر اليقين...", expanded=False):
-                search_data = deep_search(prompt)
+        if needs_search and not is_about_creator:
+            with st.status("بيجيب لك تاريخه من النت يا حريف...", expanded=False):
+                search_data = improved_search(prompt)
         
         system_prompt = f"""
-        أنت (Fekra AI)، المساعد الذكي الخارق. مطورك هو المبرمج أحمد وائل (الحريف).
-        التاريخ: {current_date}.
-        معلومات البحث المتاحة:
+        أنت (Fekra AI)، المساعد الخارق الذي ابتكره أحمد وائل (الحريف).
+        التاريخ اليوم: {current_date}.
+        
+        بيانات البحث الحية من الإنترنت:
         {search_data}
         
-        القواعد:
-        1. نادِ المستخدم بـ "يا حريف".
-        2. لو فيه بحث، جاوب بدقة بناءً عليه. لو سألك عن شخص غير مطورك، استخدم نتائج البحث.
-        3. لو مطورك قالك "غلط ابحث"، اعتذر بذكاء واستخدم نتائج البحث الجديدة لتصحيح المعلومة.
-        4. اللهجة: مصرية حريفة.
+        التعليمات الصارمة للإجابة:
+        1. لو المستخدم سألك عن "شخص" (يوتيوبر، تيك توكر، إلخ)، استخدم حصرياً بيانات البحث المتاحة فوق.
+        2. ممنوع الهبد؛ لو مفيش معلومة صريحة في البحث، قول "مش لاقي تفاصيل أكيدة عنه دلوقت".
+        3. لو سألك عن مطورك "أحمد وائل الحريف"، رد بحب وفخر من غير بحث.
+        4. اللهجة: مصرية حريفة ونظيفة، إملاء مثالي، وبدون رموز غريبة.
         """
 
         try:
@@ -122,7 +114,7 @@ if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
                 model="llama-3.3-70b-versatile",
                 messages=[{"role": "system", "content": system_prompt}] + st.session_state.messages,
                 stream=True,
-                temperature=0.3
+                temperature=0.1 # أقل درجة حرارة عشان ينقل المعلومات بدقة بدون تأليف
             )
             
             full_response = ""
@@ -134,5 +126,5 @@ if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
             message_placeholder.markdown(full_response)
             st.session_state.messages.append({"role": "assistant", "content": full_response})
         except Exception as e:
-            st.error(f"خطأ: {e}")
+            st.error(f"مشكلة فنية: {e}")
             
