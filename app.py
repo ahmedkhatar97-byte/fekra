@@ -3,32 +3,23 @@ from groq import Groq
 from tavily import TavilyClient
 from datetime import datetime
 
-# 1. إعدادات الصفحة والستايل النيون الكامل
+# 1. إعدادات الصفحة والستايل النيون
 st.set_page_config(page_title="Fekra AI", page_icon="💡", layout="centered")
 
 st.markdown(r"""
     <style>
-    /* إخفاء زوائد استريمليت */
     footer {visibility: hidden; height: 0%;}
     header {visibility: hidden;}
     #MainMenu {visibility: hidden;}
     [data-testid="stToolbar"], [data-testid="stDecoration"], [data-testid="stStatusWidget"] {display: none !important;}
     .stDeployButton {display:none !important;}
-
-    /* توحيد الخلفية السودة */
     [data-testid="stAppViewContainer"], [data-testid="stHeader"], [data-testid="stMainViewContainer"],
-    [data-testid="stBottom"], [data-testid="stBottomBlockContainer"] {
-        background-color: #0E1117 !important;
-    }
-    
+    [data-testid="stBottom"], [data-testid="stBottomBlockContainer"] { background-color: #0E1117 !important; }
     p, span, div, label { color: #FFFFFF !important; font-weight: 500; }
     h1 { color: #00F2FF !important; text-shadow: 0px 0px 15px #00F2FF; text-align: center; margin-top: -50px; }
-
-    /* ستايل الدردشة */
     .stChatMessage { background-color: #161B22 !important; border: 1px solid #00F2FF33 !important; border-radius: 15px !important; }
     [data-testid="stChatInput"] textarea { color: #FFFFFF !important; background-color: #161B22 !important; border-radius: 20px !important; }
-
-    /* 8. الشاشة الافتتاحية (Intro) */
+    
     #splash-screen {
         position: fixed;
         top: 0; left: 0; width: 100vw; height: 100vh;
@@ -39,20 +30,8 @@ st.markdown(r"""
         animation: fadeOut 2.5s forwards;
         pointer-events: none;
     }
-
-    @keyframes fadeOut {
-        0% { opacity: 1; }
-        85% { opacity: 1; }
-        100% { opacity: 0; visibility: hidden; }
-    }
-
-    .neon-text {
-        font-size: 50px;
-        color: #00F2FF;
-        text-shadow: 0 0 20px #00F2FF, 0 0 40px #00F2FF;
-        font-family: 'Segoe UI', sans-serif;
-        font-weight: bold;
-    }
+    @keyframes fadeOut { 0% { opacity: 1; } 85% { opacity: 1; } 100% { opacity: 0; visibility: hidden; } }
+    .neon-text { font-size: 50px; color: #00F2FF; text-shadow: 0 0 20px #00F2FF, 0 0 40px #00F2FF; font-family: 'Segoe UI', sans-serif; font-weight: bold; }
     </style>
 
     <div id="splash-screen">
@@ -62,7 +41,6 @@ st.markdown(r"""
     """, unsafe_allow_html=True)
 
 st.title("💡 Fekra AI")
-st.markdown("<p style='text-align: center; color: #808495 !important;'>نسخة الحريف الشاملة | ذكاء بلا حدود</p>", unsafe_allow_html=True)
 
 # 2. جلب المفاتيح
 try:
@@ -72,10 +50,11 @@ except:
     st.error("تأكد من إضافة المفاتيح في الـ Secrets!")
     st.stop()
 
-# 3. دالة البحث الذكي
-def smart_search(query):
+# 3. دالة البحث المتقدمة
+def deep_search(query):
     try:
-        response = tavily.search(query=query, search_depth="advanced", max_results=5)
+        # البحث بعمق لجلب نتائج دقيقة جداً
+        response = tavily.search(query=query, search_depth="advanced", max_results=7)
         return "\n".join([f"- {r['content']}" for r in response['results']])
     except:
         return ""
@@ -98,19 +77,27 @@ if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
     with st.chat_message("assistant"):
         message_placeholder = st.empty()
         
-        # البحث فقط عند الضرورة لضمان السرعة
+        # ذكاء قرار البحث: ابحث عن كل شيء إلا لو الكلام عن المطور (أحمد وائل)
         search_data = ""
-        trigger_words = ["ماتش", "نتيجة", "سعر", "اخبار", "النهاردة", "امبارح", "تاريخ", "دلوقتي"]
-        if any(word in prompt.lower() for word in trigger_words):
-            with st.status("بيسيرش عشانك يا حريف...", expanded=False):
-                search_data = smart_search(prompt)
+        is_about_creator = any(name in prompt.lower() for name in ["احمد وائل", "أحمد وائل", "حريف", "الحريف", "مين اللي عملك"])
+        
+        # لو السؤال مش عنك، ابحث عشان يجاوب صح
+        if not is_about_creator:
+            with st.status("بيجيب لك المعلومات الأكيدة من النت...", expanded=False):
+                search_data = deep_search(prompt)
         
         system_prompt = f"""
-        أنت (Fekra AI)، المساعد الخارق الذي طوره المبرمج أحمد وائل (الحريف).
-        خاطب المستخدم دائماً بلقبه "يا حريف".
+        أنت (Fekra AI)، المساعد الذكي الخارق. مطورك هو المبرمج أحمد وائل (الحريف).
         التاريخ الحالي: {current_date}.
-        بيانات البحث الحية: {search_data}
-        القواعد: تحدث بلهجة مصرية حريفة، التزم بالدقة الإملائية، ولا تستخدم رموزاً غريبة.
+        
+        معلومات البحث الحقيقية (استخدمها للرد بدقة):
+        {search_data}
+        
+        القواعد:
+        1. لو المستخدم سألك "مين اللي عملك" أو ناداك باسم مطورك، رد بذكاء وفخر إنك من ابتكار أحمد وائل الحريف (بدون بحث).
+        2. لأي سؤال تاني (ماتشات، أخبار، معلومات عامة)، اعتمد كلياً على "معلومات البحث" المرفقة وجاوب بدقة 100%.
+        3. لو فيه نتيجة ماتش، قول النتيجة بالظبط ومين سجل الأهداف لو موجود.
+        4. اللهجة: مصرية حريفة، إملاء مثالي، وبدون رموز غريبة.
         """
 
         try:
@@ -118,7 +105,7 @@ if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
                 model="llama-3.3-70b-versatile",
                 messages=[{"role": "system", "content": system_prompt}] + st.session_state.messages,
                 stream=True,
-                temperature=0.3
+                temperature=0.2 # تقليل الحرارة لضمان الدقة في نقل النتائج
             )
             
             full_response = ""
@@ -130,5 +117,5 @@ if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
             message_placeholder.markdown(full_response)
             st.session_state.messages.append({"role": "assistant", "content": full_response})
         except Exception as e:
-            st.error(f"خطأ فني: {e}")
+            st.error(f"خطأ: {e}")
             
