@@ -5,29 +5,11 @@ from datetime import datetime
 import base64 # مهمة لتحليل الصور
 from PIL import Image # مهمة لعرض الصورة
 
-# 1. إعدادات الصفحة والستايل النيون الكامل# 1. إرجاع الأيقونة الأصلية (الرجل والروبوت) في إعدادات الصفحة
-st.set_page_config(page_title="Fekra AI Vision v2", page_icon="👨‍💻🤖", layout="centered")
+# 1. إعدادات الصفحة والستايل النيون الكامل المتطور (The Signature v2)
+st.set_page_config(page_title="Fekra AI Vision v2", page_icon="💡", layout="centered")
 
 st.markdown(r"""
-    <!-- استدعاء الخطوط الفخمة من Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;900&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
-
     <style>
-    /* تطبيق الخطوط الجديدة على الأبليكيشن بالكامل */
-    html, body, [data-testid="stAppViewContainer"], p, span, div, label, textarea, button {
-        font-family: 'Tajawal', sans-serif !important;
-        font-weight: 500;
-        color: #FFFFFF !important;
-    }
-    
-    /* تخصيص خط Cairo الفخم للعناوين الكبيرة فقط */
-    h1, h2, h3, .neon-text-new {
-        font-family: 'Cairo', sans-serif !important;
-        font-weight: 900 !important;
-    }
-
     /* إخفاء زوائد استريمليت المعتادة */
     footer {visibility: hidden; height: 0%;}
     header {visibility: hidden;}
@@ -41,6 +23,7 @@ st.markdown(r"""
         background-color: #0E1117 !important;
     }
     
+    p, span, div, label { color: #FFFFFF !important; font-weight: 500; }
     h1 { color: #00F2FF !important; text-shadow: 0px 0px 15px #00F2FF; text-align: center; margin-top: -50px; }
 
     /* ستايل الدردشة المطور */
@@ -77,6 +60,8 @@ st.markdown(r"""
     .neon-text-new {
         font-size: 55px;
         color: #00F2FF;
+        font-family: 'Segoe UI', sans-serif;
+        font-weight: 900;
         letter-spacing: 2px;
         animation: neonPulse 1.5s infinite ease-in-out;
     }
@@ -188,7 +173,7 @@ if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
             with st.status("بقلب لك النت عشان خاطر عيونك...", expanded=False):
                 search_data = power_search(prompt)
         
-        # دستور فكرة AI المتطور - نسخة صفر أخطاء إملائية وتنظيم كامل بالخطوط الجديدة
+        # دستور فكرة AI المتطور - نسخة صفر أخطاء إملائية وتنظيم كامل
         system_prompt = f"""
         أنت (Fekra AI)، المساعد الخارق والذكاء الاصطناعي الأكثر تطوراً وتنظيماً من ابتكار المبرمج أحمد وائل الحريف.
         اللهجة الحالية: مصرية حريفة، ذكية، واثقة، ومرحة.
