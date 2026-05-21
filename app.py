@@ -5,8 +5,8 @@ from datetime import datetime
 import base64 # مهمة لتحليل الصور
 from PIL import Image # مهمة لعرض الصورة
 
-# 1. إعدادات الصفحة والستايل النيون الكامل (The Signature)
-st.set_page_config(page_title="Fekra AI Vision", page_icon="💡", layout="centered")
+# 1. إعدادات الصفحة والستايل النيون الكامل المتطور (The Signature v2)
+st.set_page_config(page_title="Fekra AI Vision v2", page_icon="💡", layout="centered")
 
 st.markdown(r"""
     <style>
@@ -26,14 +26,14 @@ st.markdown(r"""
     p, span, div, label { color: #FFFFFF !important; font-weight: 500; }
     h1 { color: #00F2FF !important; text-shadow: 0px 0px 15px #00F2FF; text-align: center; margin-top: -50px; }
 
-    /* ستايل الدردشة (المعتمد) */
+    /* ستايل الدردشة المطور */
     .stChatMessage { background-color: #161B22 !important; border: 1px solid #00F2FF33 !important; border-radius: 15px !important; }
     [data-testid="stChatInput"] textarea { color: #FFFFFF !important; background-color: #161B22 !important; border-radius: 20px !important; }
 
     /* ستايل الصورة في الدردشة */
     .stChatMessage img { border-radius: 10px; margin-top: 10px; border: 1px solid #00F2FF33; }
 
-    /* الشاشة الافتتاحية (Intro) */
+    /* --- الأنيميشن النيون الجديد المتطور (The New Splash Screen Animation) --- */
     #splash-screen {
         position: fixed;
         top: 0; left: 0; width: 100vw; height: 100vh;
@@ -41,26 +41,63 @@ st.markdown(r"""
         display: flex; flex-direction: column;
         justify-content: center; align-items: center;
         z-index: 9999;
-        animation: fadeOut 2.5s forwards;
+        animation: fadeOut 2.8s cubic-bezier(0.1, 0.8, 0.25, 1) forwards;
         pointer-events: none;
     }
+    
+    /* أنيميشن نبض النيون وتقريب الاسم */
+    @keyframes neonPulse {
+        0%, 100% { text-shadow: 0 0 15px #00F2FF, 0 0 30px #00F2FF; transform: scale(0.98); }
+        50% { text-shadow: 0 0 30px #00F2FF, 0 0 60px #00F2FF, 0 0 80px #00F2FF; transform: scale(1.02); }
+    }
+    
     @keyframes fadeOut {
         0% { opacity: 1; }
         85% { opacity: 1; }
         100% { opacity: 0; visibility: hidden; }
     }
-    .neon-text {
-        font-size: 50px;
+    
+    .neon-text-new {
+        font-size: 55px;
         color: #00F2FF;
-        text-shadow: 0 0 20px #00F2FF, 0 0 40px #00F2FF;
         font-family: 'Segoe UI', sans-serif;
-        font-weight: bold;
+        font-weight: 900;
+        letter-spacing: 2px;
+        animation: neonPulse 1.5s infinite ease-in-out;
+    }
+
+    /* شريط تحميل نيون سفلي ناعم */
+    .loader-bar {
+        width: 200px;
+        height: 3px;
+        background: rgba(0, 242, 255, 0.1);
+        margin-top: 25px;
+        border-radius: 10px;
+        overflow: hidden;
+        position: relative;
+    }
+    .loader-progress {
+        width: 100%;
+        height: 100%;
+        background: #00F2FF;
+        box-shadow: 0 0 10px #00F2FF;
+        position: absolute;
+        transform: translateX(-100%);
+        animation: loading 2.2s ease-in-out forwards;
+    }
+    @keyframes loading {
+        0% { transform: translateX(-100%); }
+        50% { transform: translateX(-30%); }
+        100% { transform: translateX(0%); }
     }
     </style>
 
     <div id="splash-screen">
-        <div class="neon-text">💡 FEKRA AI</div>
-        <p style="margin-top: 15px; color: #808495 !important; font-size: 18px;">Vision Enabled | Created by Al-Hareef</p>
+        <div class="neon-text-new">💡 FEKRA AI</div>
+        <p style="margin-top: 15px; color: #808495 !important; font-size: 16px; letter-spacing: 1px;">SYSTEM READY | CREATED BY AL-HAREEF</p>
+        <div class="loader-bar">
+            <div class="loader-progress"></div>
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -75,8 +112,6 @@ except:
     st.stop()
 
 # 3. الدوال الأساسية (البحث والتحليل)
-
-# دالة البحث "الشرسة" المعتمدة (عن الأشخاص واليوتيوبرز)
 def power_search(query):
     try:
         search_query = f"{query} who is this person news and social media details"
@@ -88,7 +123,6 @@ def power_search(query):
     except:
         return ""
 
-# دالة تحليل الصورة (تحويلها لكود Base64)
 def encode_image(image_file):
     return base64.b64encode(image_file.read()).decode('utf-8')
 
@@ -97,8 +131,6 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 
 # 5. واجهة المستخدم
-
-# منطقة رفع الصورة في القائمة الجانبية (Sidebar)
 st.sidebar.markdown(r"""
     <h3 style='color: #00F2FF; text-shadow: 0 0 10px #00F2FF;'>🖼️ إضافة صورة للتحليل</h3>
     """, unsafe_allow_html=True)
@@ -109,7 +141,6 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
         if "image_b64" in message:
-            # عرض الصورة إذا كانت موجودة في الرسالة
             st.image(Image.open(base64.b64decode(message["image_b64"])))
 
 # 6. معالجة الإدخال الجديد والدردشة
@@ -122,56 +153,59 @@ if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
     base64_image = ""
     if uploaded_file is not None:
         base64_image = encode_image(uploaded_file)
-        # حفظ الصورة في الذاكرة لعرضها لاحقاً
         st.session_state.messages[-1]["image_b64"] = base64_image
         with st.chat_message("user"):
             st.image(uploaded_file)
-        # تفريغ خانة رفع الملف
         uploaded_file = None
 
     with st.chat_message("assistant"):
         message_placeholder = st.empty()
-        
-        # 8. ذكاء القرار (بحث نصوص أم تحليل صور؟)
-        
         search_data = ""
         
-        # استثناء مطورك
-        is_about_creator = any(name in prompt.lower() for name in ["احمد وائل", "أحمد وائل", "حريف", "الحريف"])
+        # كشف ذكي متطور لاسم المطور لضمان السرية والأمان الكامل
+        is_about_creator = any(name in prompt.lower() for name in ["احمد وائل", "أحمد وائل", "حريف", "الحريف", "elhareef"])
         
-        # محفزات البحث عن نصوص (نفس المحفزات المعتمدة)
+        # محفزات البحث
         search_triggers = ["مين", "من هو", "من هي", "تعرف", "ابحث", "غلط", "تيك توك", "يوتيوبر", "لاعب", "فنان"]
         should_search_text = any(trigger in prompt.lower() for trigger in search_triggers)
 
-        # قرار البحث عن نصوص
         if not base64_image and should_search_text and not is_about_creator:
             with st.status("بقلب لك النت عشان خاطر عيونك...", expanded=False):
                 search_data = power_search(prompt)
         
-        # دستور فكرة AI المعتمد
+        # دستور فكرة AI المتطور - نسخة صفر أخطاء إملائية وتنظيم كامل
         system_prompt = f"""
-        أنت (Fekra AI)، المساعد الخارق من ابتكار أحمد وائل (الحريف).
-        اللهجة: مصرية حريفة وواثقة.
+        أنت (Fekra AI)، المساعد الخارق والذكاء الاصطناعي الأكثر تطوراً وتنظيماً من ابتكار المبرمج أحمد وائل الحريف.
+        اللهجة الحالية: مصرية حريفة، ذكية، واثقة، ومرحة.
         
-        مهامك:
-        1. نادِ المستخدم بـ "يا حريف".
-        2. لو سألك عن "أحمد وائل الحريف"، قوله ده الباشا وممنوع تبحث عنه.
-        3. لو فيه معلومات بحث نصوص (عن مشاهير، إلخ)، حللها وقول التفاصيل بوضوح (متابعين، أعمال).
+        ⚠️ قواعد صارمة لمنع الأخطاء الإملائية واللغوية:
+        - راجع الكلمات لغوياً وإملائياً قبل كتابتها؛ ممنوع تماماً إنتاج كلمات مكسرة، أو حروف ناقصة، أو دمج كلمات ببعضها.
+        - اكتب العامية المصرية بطريقة صحيحة ومفهومة (مثل كتابة "عشان" بدلاً من "عسأن"، و"بصورة" بدلاً من "بصوره").
+        
+        قواعد التنسيق والترتيب الإلزامية:
+        - ممنوع نهائياً كتابة الإجابة كلها ككتلة نصية واحدة (دش كلام).
+        - استخدم العناوين الكبيرة والفرعية (مثل ## و ###) لتقسيم الموضوعات بوضوح.
+        - استخدم الخطوط الفاصلة (---) للفصل بين الأفكار الرئيسية.
+        - استخدم القوائم النقطية (*) لعرض العناصر والمعلومات بطريقة يسهل قراءتها في لمح البصر.
+        - استخدم الخط العريض (**الكلمة**) لتمييز المصطلحات الهامة والعبارات المفتاحية.
+        
+        القواعد العامة:
+        1. نادِ المستخدم دائمًا بـ "يا حريف".
+        2. أحمد وائل الحريف هو صانعك ومطورك الأساسي، لو سألك عنه المستخدم أو تلمح له بأي شكل، قوله بكل فخر واعتزاز: "ده الباشا الكبير ومطور فكرة وممنوع البحث عنه لأن بياناته مشفرة تماماً!".
+        3. استخدم بيانات البحث المرفقة بذكاء واختصر المفيد للمستخدم فوراً في نقاط منظمة.
         """
 
         # 9. تنفيذ الرد
         try:
-            # الحالة الأولى: فيه صورة للتحليل
             if base64_image:
-                model_to_use = "llama-3.2-90b-vision-preview" # أقوى موديل رؤية حالياً
+                model_to_use = "llama-3.2-90b-vision-preview"
                 messages = [
-                    {"role": "system", "content": system_prompt + "\n4. فيه صورة مرفقة، حللها بدقة وقول التفاصيل يا حريف."},
+                    {"role": "system", "content": system_prompt + "\n4. فيه صورة مرفقة، حللها بدقة متناهية، ونظم إجابتك بعناوين ونقاط واضحة، والتزم تماماً بصفر أخطاء إملائية بأسلوب حريف."},
                     {"role": "user", "content": [{"type": "text", "text": prompt}, {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}]}
                 ]
             else:
-                # الحالة الثانية: دردشة نصوص عادية (مع البحث)
-                model_to_use = "llama-3.3-70b-versatile" # الموديل المعتمد للنصوص
-                messages = [{"role": "system", "content": system_prompt + f"\nمعلومات البحث: {search_data}"}] + st.session_state.messages
+                model_to_use = "llama-3.3-70b-versatile"
+                messages = [{"role": "system", "content": system_prompt + f"\nمعلومات البحث الحالية: {search_data}"}] + st.session_state.messages
 
             response = client.chat.completions.create(
                 model=model_to_use,
