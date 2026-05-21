@@ -5,8 +5,8 @@ from datetime import datetime
 import base64 # مهمة لتحليل الصور
 from PIL import Image # مهمة لعرض الصورة
 
-# 1. إعدادات الصفحة والستايل النيون الكامل المتطور بالخطوط الفخمة (The Signature v3)
-st.set_page_config(page_title="Fekra AI Vision v2", page_icon="💡", layout="centered")
+# 1. إعدادات الصفحة والستايل النيون الكامل# 1. إرجاع الأيقونة الأصلية (الرجل والروبوت) في إعدادات الصفحة
+st.set_page_config(page_title="Fekra AI Vision v2", page_icon="👨‍💻🤖", layout="centered")
 
 st.markdown(r"""
     <!-- استدعاء الخطوط الفخمة من Google Fonts -->
