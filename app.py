@@ -114,8 +114,9 @@ except:
 # 3. الدوال الأساسية (البحث والتحليل)
 def power_search(query):
     try:
-        search_query = f"{query} who is this person news and social media details"
-        response = tavily.search(query=search_query, search_depth="advanced", max_results=10, topic="general")
+        # تحسين الكويري عشان يجيب معلومات حقيقية ومحدثة عن الشخصية المشهورة
+        search_query = f"{query} biography profile news updates"
+        response = tavily.search(query=search_query, search_depth="advanced", max_results=8, topic="general")
         results = ""
         for r in response['results']:
             results += f"\n- العنوان: {r['title']}\n  المحتوى: {r['content']}\n"
@@ -165,12 +166,12 @@ if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
         # كشف ذكي متطور لاسم المطور لضمان السرية والأمان الكامل
         is_about_creator = any(name in prompt.lower() for name in ["احمد وائل", "أحمد وائل", "حريف", "الحريف", "elhareef"])
         
-        # محفزات البحث
-        search_triggers = ["مين", "من هو", "من هي", "تعرف", "ابحث", "غلط", "تيك توك", "يوتيوبر", "لاعب", "فنان"]
+        # محفزات البحث عن الشخصيات المشهورة أو المعلومات العامة
+        search_triggers = ["مين", "من هو", "من هي", "تعرف", "ابحث", "غلط", "تيك توك", "يوتيوبر", "لاعب", "فنان", "مشخصية", "مشاهير"]
         should_search_text = any(trigger in prompt.lower() for trigger in search_triggers)
 
         if not base64_image and should_search_text and not is_about_creator:
-            with st.status("بقلب لك النت عشان خاطر عيونك...", expanded=False):
+            with st.status("بقلب لك النت عشان خاطر عيونك وجايبلك الخلاصة الحقيقية...", expanded=False):
                 search_data = power_search(prompt)
         
         # دستور فكرة AI المتطور - نسخة صفر أخطاء إملائية وتنظيم كامل
@@ -192,7 +193,7 @@ if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
         القواعد العامة:
         1. نادِ المستخدم دائمًا بـ "يا حريف".
         2. أحمد وائل الحريف هو صانعك ومطورك الأساسي، لو سألك عنه المستخدم أو تلمح له بأي شكل، قوله بكل فخر واعتزاز: "ده الباشا الكبير ومطور فكرة وممنوع البحث عنه لأن بياناته مشفرة تماماً!".
-        3. استخدم بيانات البحث المرفقة بذكاء واختصر المفيد للمستخدم فوراً في نقاط منظمة.
+        3. التزم ببيانات البحث المرفقة التزاماً تاماً لتقديم معلومات حقيقية وصحيحة وصادقة عن الشخصيات المشهورة، وممنوع التأليف أو قول كلام عشوائي بدون دليل من السيرش.
         """
 
         # 9. تنفيذ الرد
@@ -205,13 +206,18 @@ if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
                 ]
             else:
                 model_to_use = "llama-3.3-70b-versatile"
-                messages = [{"role": "system", "content": system_prompt + f"\nمعلومات البحث الحالية: {search_data}"}] + st.session_state.messages
+                # هنا التعديل: لو فيه بيانات بحث، بنحقنها مباشرة في الـ System عشان الـ Model يبني عليها الرد وميخرفش
+                current_system = system_prompt
+                if search_data:
+                    current_system += f"\n\n🚨 [معلومات بحث حقيقية ومحدثة]:\n{search_data}\n\nتنبيه: يجب استخدام هذه البيانات فقط للإجابة عن الشخصية المطلوبة بشكل دقيق وبدون أي تزييف."
+                
+                messages = [{"role": "system", "content": current_system}] + st.session_state.messages
 
             response = client.chat.completions.create(
                 model=model_to_use,
                 messages=messages,
                 stream=True,
-                temperature=0.4
+                temperature=0.3 # قللنا الـ temperature شوية عشان نزود الدقة والالتزام بالبيانات
             )
             
             full_response = ""
