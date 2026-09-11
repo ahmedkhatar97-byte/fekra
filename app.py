@@ -107,9 +107,32 @@ st.title("💡 Fekra AI")
 try:
     client = Groq(api_key=st.secrets["GROQ_API_KEY"])
     tavily = TavilyClient(api_key=st.secrets["TAVILY_API_KEY"])
-except:
-    st.error("ارفع المفاتيح في الـ Secrets يا حريف!")
+except Exception as e:
+    st.error("ارفع المفاتيح صح في الـ Secrets يا حريف!")
     st.stop()
+
+# دالة ذكية لإيجاد الموديل المتاح والمنشط فوراً على المفتاح الخاص بك
+@st.cache_resource
+def get_working_text_model():
+    # قائمة بجميع موديلات Groq النصية الحديثة مرتبة بالأفضلية
+    candidates = [
+        "llama-3.3-70b-versatile",
+        "llama-3.1-70b-versatile",
+        "llama-3.1-8b-instant",
+        "mixtral-8x7b-32768",
+        "gemma2-9b-it"
+    ]
+    for model in candidates:
+        try:
+            client.chat.completions.create(
+                model=model,
+                messages=[{"role": "user", "content": "hi"}],
+                max_tokens=1
+            )
+            return model
+        except Exception:
+            continue
+    return "llama-3.1-8b-instant"
 
 # 3. الدوال الأساسية (البحث والتحليل والصوت)
 def power_search(query):
@@ -214,19 +237,20 @@ if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
                     {"role": "user", "content": [{"type": "text", "text": prompt}, {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}]}
                 ]
             else:
-                model_to_use = "llama-3.1-8b-instant"
+                # اختيار الموديل المتاح تلقائياً
+                model_to_use = get_working_text_model()
                 current_system = system_prompt
                 if search_data:
                     current_system += f"\n\n🚨 [معلومات بحث حقيقية ومحدثة]:\n{search_data}\n\nتنبيه: يجب استخدام هذه البيانات فقط للإجابة عن الشخصية المطلوبة بشكل دقيق وبدون أي تزييف."
                 
-                # تصفية الذاكرة لإرسال النصوص فقط لتجنب أي تعارض
                 clean_messages = [{"role": "system", "content": current_system}]
                 for m in st.session_state.messages:
                     clean_messages.append({"role": m["role"], "content": m["content"]})
+                messages = clean_messages
 
             response = client.chat.completions.create(
                 model=model_to_use,
-                messages=clean_messages if not base64_image else messages,
+                messages=messages,
                 stream=True,
                 temperature=0.3
             )
