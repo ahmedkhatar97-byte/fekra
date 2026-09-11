@@ -214,16 +214,19 @@ if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
                     {"role": "user", "content": [{"type": "text", "text": prompt}, {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}]}
                 ]
             else:
-                model_to_use = "llama-3.1-8b-instant"  # النموذج السريع والمستقر الحاليا على Groq
+                model_to_use = "llama-3.1-8b-instant"
                 current_system = system_prompt
                 if search_data:
                     current_system += f"\n\n🚨 [معلومات بحث حقيقية ومحدثة]:\n{search_data}\n\nتنبيه: يجب استخدام هذه البيانات فقط للإجابة عن الشخصية المطلوبة بشكل دقيق وبدون أي تزييف."
                 
-                messages = [{"role": "system", "content": current_system}] + st.session_state.messages
+                # تصفية الذاكرة لإرسال النصوص فقط لتجنب أي تعارض
+                clean_messages = [{"role": "system", "content": current_system}]
+                for m in st.session_state.messages:
+                    clean_messages.append({"role": m["role"], "content": m["content"]})
 
             response = client.chat.completions.create(
                 model=model_to_use,
-                messages=messages,
+                messages=clean_messages if not base64_image else messages,
                 stream=True,
                 temperature=0.3
             )
