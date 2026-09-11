@@ -2,12 +2,12 @@ import streamlit as st
 from groq import Groq
 from tavily import TavilyClient
 from datetime import datetime
-import base64 # مهمة لتحليل الصور
-from PIL import Image # مهمة لعرض الصورة
-from gtts import gTTS # مكتبة الصوت
+import base64
+from PIL import Image
+from gtts import gTTS
 import io
 
-# 1. إعدادات الصفحة والستايل النيون الكامل المتطور (The Signature v2)
+# 1. إعدادات الصفحة والستايل النيون الكامل المتطور
 st.set_page_config(page_title="Fekra AI Vision v2", page_icon="💡", layout="centered")
 
 st.markdown(r"""
@@ -35,7 +35,7 @@ st.markdown(r"""
     /* ستايل الصورة في الدردشة */
     .stChatMessage img { border-radius: 10px; margin-top: 10px; border: 1px solid #00F2FF33; }
 
-    /* --- الأنيميشن النيون الجديد المتطور (The New Splash Screen Animation) --- */
+    /* --- الأنيميشن النيون الجديد المتطور --- */
     #splash-screen {
         position: fixed;
         top: 0; left: 0; width: 100vw; height: 100vh;
@@ -47,7 +47,6 @@ st.markdown(r"""
         pointer-events: none;
     }
     
-    /* أنيميشن نبض النيون وتقريب الاسم */
     @keyframes neonPulse {
         0%, 100% { text-shadow: 0 0 15px #00F2FF, 0 0 30px #00F2FF; transform: scale(0.98); }
         50% { text-shadow: 0 0 30px #00F2FF, 0 0 60px #00F2FF, 0 0 80px #00F2FF; transform: scale(1.02); }
@@ -68,7 +67,6 @@ st.markdown(r"""
         animation: neonPulse 1.5s infinite ease-in-out;
     }
 
-    /* شريط تحميل نيون سفلي ناعم */
     .loader-bar {
         width: 200px;
         height: 3px;
@@ -113,7 +111,7 @@ except:
     st.error("ارفع المفاتيح في الـ Secrets يا حريف!")
     st.stop()
 
-# 3. الدوال الأساسية (البحث والتحليل والتحويل لصوت)
+# 3. الدوال الأساسية (البحث والتحليل والصوت)
 def power_search(query):
     try:
         search_query = f"{query} biography profile news updates"
@@ -128,10 +126,8 @@ def power_search(query):
 def encode_image(image_file):
     return base64.b64encode(image_file.read()).decode('utf-8')
 
-# دالة توليد الصوت التشغيلي
 def text_to_speech(text):
     try:
-        # تنظيف النص من علامات الـ Markdown عشان القراءة تكون طبيعية
         clean_text = text.replace("*", "").replace("#", "").replace("-", "")
         tts = gTTS(text=clean_text, lang='ar', slow=False)
         fp = io.BytesIO()
@@ -140,7 +136,7 @@ def text_to_speech(text):
         b64_audio = base64.b64encode(fp.read()).decode()
         audio_html = f'<audio src="data:audio/mp3;base64,{b64_audio}" controls autoplay style="width: 100%; margin-top: 10px;"></audio>'
         return audio_html
-    except Exception as e:
+    except Exception:
         return None
 
 # 4. الذاكرة
@@ -212,13 +208,13 @@ if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
 
         try:
             if base64_image:
-                model_to_use = "llama-3.2-90b-vision-preview"
+                model_to_use = "llama-3.2-11b-vision-preview"
                 messages = [
                     {"role": "system", "content": system_prompt + "\n4. فيه صورة مرفقة، حللها بدقة متناهية، ونظم إجابتك بعناوين ونقاط واضحة، والتزم تماماً بصفر أخطاء إملائية بأسلوب حريف."},
                     {"role": "user", "content": [{"type": "text", "text": prompt}, {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}]}
                 ]
             else:
-                model_to_use = "llama-3.3-70b-versatile"
+                model_to_use = "llama3-70b-8192"
                 current_system = system_prompt
                 if search_data:
                     current_system += f"\n\n🚨 [معلومات بحث حقيقية ومحدثة]:\n{search_data}\n\nتنبيه: يجب استخدام هذه البيانات فقط للإجابة عن الشخصية المطلوبة بشكل دقيق وبدون أي تزييف."
@@ -240,7 +236,7 @@ if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
             
             message_placeholder.markdown(full_response)
             
-            # تحويل النص إلى صوت وتشغيله تلقائياً
+            # توليد ونطق الصوت
             audio_html = text_to_speech(full_response)
             if audio_html:
                 st.markdown(audio_html, unsafe_allow_html=True)
