@@ -4,6 +4,8 @@ from tavily import TavilyClient
 from datetime import datetime
 import base64 # مهمة لتحليل الصور
 from PIL import Image # مهمة لعرض الصورة
+from gtts import gTTS # مكتبة الصوت
+import io
 
 # 1. إعدادات الصفحة والستايل النيون الكامل المتطور (The Signature v2)
 st.set_page_config(page_title="Fekra AI Vision v2", page_icon="💡", layout="centered")
@@ -111,10 +113,9 @@ except:
     st.error("ارفع المفاتيح في الـ Secrets يا حريف!")
     st.stop()
 
-# 3. الدوال الأساسية (البحث والتحليل)
+# 3. الدوال الأساسية (البحث والتحليل والتحويل لصوت)
 def power_search(query):
     try:
-        # تحسين الكويري عشان يجيب معلومات حقيقية ومحدثة عن الشخصية المشهورة
         search_query = f"{query} biography profile news updates"
         response = tavily.search(query=search_query, search_depth="advanced", max_results=8, topic="general")
         results = ""
@@ -126,6 +127,21 @@ def power_search(query):
 
 def encode_image(image_file):
     return base64.b64encode(image_file.read()).decode('utf-8')
+
+# دالة توليد الصوت التشغيلي
+def text_to_speech(text):
+    try:
+        # تنظيف النص من علامات الـ Markdown عشان القراءة تكون طبيعية
+        clean_text = text.replace("*", "").replace("#", "").replace("-", "")
+        tts = gTTS(text=clean_text, lang='ar', slow=False)
+        fp = io.BytesIO()
+        tts.write_to_fp(fp)
+        fp.seek(0)
+        b64_audio = base64.b64encode(fp.read()).decode()
+        audio_html = f'<audio src="data:audio/mp3;base64,{b64_audio}" controls autoplay style="width: 100%; margin-top: 10px;"></audio>'
+        return audio_html
+    except Exception as e:
+        return None
 
 # 4. الذاكرة
 if "messages" not in st.session_state:
@@ -143,6 +159,8 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
         if "image_b64" in message:
             st.image(Image.open(base64.b64decode(message["image_b64"])))
+        if "audio_html" in message:
+            st.markdown(message["audio_html"], unsafe_allow_html=True)
 
 # 6. معالجة الإدخال الجديد والدردشة
 if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
@@ -163,10 +181,7 @@ if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
         message_placeholder = st.empty()
         search_data = ""
         
-        # كشف ذكي متطور لاسم المطور لضمان السرية والأمان الكامل
         is_about_creator = any(name in prompt.lower() for name in ["احمد وائل", "أحمد وائل", "حريف", "الحريف", "elhareef"])
-        
-        # محفزات البحث عن الشخصيات المشهورة أو المعلومات العامة
         search_triggers = ["مين", "من هو", "من هي", "تعرف", "ابحث", "غلط", "تيك توك", "يوتيوبر", "لاعب", "فنان", "مشخصية", "مشاهير"]
         should_search_text = any(trigger in prompt.lower() for trigger in search_triggers)
 
@@ -174,7 +189,6 @@ if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
             with st.status("بقلب لك النت عشان خاطر عيونك وجايبلك الخلاصة الحقيقية...", expanded=False):
                 search_data = power_search(prompt)
         
-        # دستور فكرة AI المتطور - نسخة صفر أخطاء إملائية وتنظيم كامل
         system_prompt = f"""
         أنت (Fekra AI)، المساعد الخارق والذكاء الاصطناعي الأكثر تطوراً وتنظيماً من ابتكار المبرمج أحمد وائل الحريف.
         اللهجة الحالية: مصرية حريفة، ذكية، واثقة، ومرحة.
@@ -196,7 +210,6 @@ if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
         3. التزم ببيانات البحث المرفقة التزاماً تاماً لتقديم معلومات حقيقية وصحيحة وصادقة عن الشخصيات المشهورة، وممنوع التأليف أو قول كلام عشوائي بدون دليل من السيرش.
         """
 
-        # 9. تنفيذ الرد
         try:
             if base64_image:
                 model_to_use = "llama-3.2-90b-vision-preview"
@@ -206,7 +219,6 @@ if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
                 ]
             else:
                 model_to_use = "llama-3.3-70b-versatile"
-                # هنا التعديل: لو فيه بيانات بحث، بنحقنها مباشرة في الـ System عشان الـ Model يبني عليها الرد وميخرفش
                 current_system = system_prompt
                 if search_data:
                     current_system += f"\n\n🚨 [معلومات بحث حقيقية ومحدثة]:\n{search_data}\n\nتنبيه: يجب استخدام هذه البيانات فقط للإجابة عن الشخصية المطلوبة بشكل دقيق وبدون أي تزييف."
@@ -217,7 +229,7 @@ if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
                 model=model_to_use,
                 messages=messages,
                 stream=True,
-                temperature=0.3 # قللنا الـ temperature شوية عشان نزود الدقة والالتزام بالبيانات
+                temperature=0.3
             )
             
             full_response = ""
@@ -227,7 +239,15 @@ if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
                     message_placeholder.markdown(full_response + "▌")
             
             message_placeholder.markdown(full_response)
-            st.session_state.messages.append({"role": "assistant", "content": full_response})
+            
+            # تحويل النص إلى صوت وتشغيله تلقائياً
+            audio_html = text_to_speech(full_response)
+            if audio_html:
+                st.markdown(audio_html, unsafe_allow_html=True)
+                st.session_state.messages.append({"role": "assistant", "content": full_response, "audio_html": audio_html})
+            else:
+                st.session_state.messages.append({"role": "assistant", "content": full_response})
+
         except Exception as e:
             st.error(f"فيه عطل فني: {e}")
             
