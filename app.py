@@ -214,7 +214,7 @@ if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
                     {"role": "user", "content": [{"type": "text", "text": prompt}, {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}]}
                 ]
             else:
-                model_to_use = "llama3-70b-8192"
+                model_to_use = "llama-3.1-8b-instant"  # النموذج السريع والمستقر الحاليا على Groq
                 current_system = system_prompt
                 if search_data:
                     current_system += f"\n\n🚨 [معلومات بحث حقيقية ومحدثة]:\n{search_data}\n\nتنبيه: يجب استخدام هذه البيانات فقط للإجابة عن الشخصية المطلوبة بشكل دقيق وبدون أي تزييف."
