@@ -214,7 +214,7 @@ if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
         for m in st.session_state.messages:
             clean_messages.append({"role": m["role"], "content": m["content"]})
 
-        # تحديد الموديلات المتاحة حسب نوع الإدخال (صورة أم نص)
+        # تحديد الموديلات الحديثة النشطة فقط حالياً في Groq
         if base64_image:
             models_to_try = ["llama-3.2-11b-vision-preview", "llama-3.2-90b-vision-preview"]
             payload_messages = [
@@ -224,9 +224,7 @@ if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
         else:
             models_to_try = [
                 "llama-3.3-70b-versatile",
-                "llama-3.1-8b-instant",
-                "llama3-8b-8192",
-                "mixtral-8x7b-32768"
+                "llama-3.1-8b-instant"
             ]
             payload_messages = clean_messages
 
