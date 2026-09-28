@@ -1,13 +1,10 @@
- 
-
 import streamlit as st
 from groq import Groq
 from tavily import TavilyClient
-from datetime import datetime
-import base64 # مهمة لتحليل الصور
-from PIL import Image # مهمة لعرض الصورة
+import base64
+from PIL import Image
 
-# 1. إعدادات الصفحة والستايل النيون الكامل المتطور (The Signature v2)
+# 1. إعدادات الصفحة والستايل النيون الكامل المتطور
 st.set_page_config(page_title="Fekra AI Vision v2", page_icon="💡", layout="centered")
 
 st.markdown(r"""
@@ -35,7 +32,7 @@ st.markdown(r"""
     /* ستايل الصورة في الدردشة */
     .stChatMessage img { border-radius: 10px; margin-top: 10px; border: 1px solid #00F2FF33; }
 
-    /* --- الأنيميشن النيون الجديد المتطور (The New Splash Screen Animation) --- */
+    /* --- الأنيميشن النيون الجديد المتطور --- */
     #splash-screen {
         position: fixed;
         top: 0; left: 0; width: 100vw; height: 100vh;
@@ -47,7 +44,6 @@ st.markdown(r"""
         pointer-events: none;
     }
     
-    /* أنيميشن نبض النيون وتقريب الاسم */
     @keyframes neonPulse {
         0%, 100% { text-shadow: 0 0 15px #00F2FF, 0 0 30px #00F2FF; transform: scale(0.98); }
         50% { text-shadow: 0 0 30px #00F2FF, 0 0 60px #00F2FF, 0 0 80px #00F2FF; transform: scale(1.02); }
@@ -68,7 +64,6 @@ st.markdown(r"""
         animation: neonPulse 1.5s infinite ease-in-out;
     }
 
-    /* شريط تحميل نيون سفلي ناعم */
     .loader-bar {
         width: 200px;
         height: 3px;
@@ -109,21 +104,20 @@ st.title("💡 Fekra AI")
 try:
     client = Groq(api_key=st.secrets["GROQ_API_KEY"])
     tavily = TavilyClient(api_key=st.secrets["TAVILY_API_KEY"])
-except:
-    st.error("ارفع المفاتيح في الـ Secrets يا حريف!")
+except Exception:
+    st.error("ارفع المفاتيح صح في الـ Secrets يا حريف!")
     st.stop()
 
-# 3. الدوال الأساسية (البحث والتحليل)
+# 3. الدوال الأساسية (البحث وتحليل الصور)
 def power_search(query):
     try:
-        # تحسين الكويري عشان يجيب معلومات حقيقية ومحدثة عن الشخصية المشهورة
         search_query = f"{query} biography profile news updates"
         response = tavily.search(query=search_query, search_depth="advanced", max_results=8, topic="general")
         results = ""
         for r in response['results']:
             results += f"\n- العنوان: {r['title']}\n  المحتوى: {r['content']}\n"
         return results
-    except:
+    except Exception:
         return ""
 
 def encode_image(image_file):
@@ -137,4 +131,114 @@ if "messages" not in st.session_state:
 st.sidebar.markdown(r"""
     <h3 style='color: #00F2FF; text-shadow: 0 0 10px #00F2FF;'>🖼️ إضافة صورة للتحليل</h3>
     """, unsafe_allow_html=True)
-uploaded_file = st.sidebar.file_uploa
+uploaded_file = st.sidebar.file_uploader("", type=["jpg", "png", "jpeg"])
+
+# عرض الرسائل السابقة
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+        if "image_b64" in message:
+            st.image(Image.open(base64.b64decode(message["image_b64"])))
+
+# 6. معالجة الإدخال الجديد والدردشة
+if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.markdown(prompt)
+
+    # 7. معالجة الصورة (إذا تم رفعها)
+    base64_image = ""
+    if uploaded_file is not None:
+        base64_image = encode_image(uploaded_file)
+        st.session_state.messages[-1]["image_b64"] = base64_image
+        with st.chat_message("user"):
+            st.image(uploaded_file)
+        uploaded_file = None
+
+    with st.chat_message("assistant"):
+        message_placeholder = st.empty()
+        search_data = ""
+        
+        is_about_creator = any(name in prompt.lower() for name in ["احمد وائل", "أحمد وائل", "حريف", "الحريف", "elhareef"])
+        search_triggers = ["مين", "من هو", "من هي", "تعرف", "ابحث", "غلط", "تيك توك", "يوتيوبر", "لاعب", "فنان", "مشخصية", "مشاهير"]
+        should_search_text = any(trigger in prompt.lower() for trigger in search_triggers)
+
+        if not base64_image and should_search_text and not is_about_creator:
+            with st.status("بقلب لك النت عشان خاطر عيونك وجايبلك الخلاصة الحقيقية...", expanded=False):
+                search_data = power_search(prompt)
+        
+        system_prompt = f"""
+        أنت (Fekra AI)، المساعد الخارق والذكاء الاصطناعي الأكثر تطوراً وتنظيماً من ابتكار المبرمج أحمد وائل الحريف.
+        اللهجة الحالية: مصرية حريفة، ذكية، واثقة، ومرحة.
+        
+        ⚠️ قواعد صارمة لمنع الأخطاء الإملائية واللغوية:
+        - راجع الكلمات لغوياً وإملائياً قبل كتابتها؛ ممنوع تماماً إنتاج كلمات مكسرة، أو حروف ناقصة، أو دمج كلمات ببعضها.
+        - اكتب العامية المصرية بطريقة صحيحة ومفهومة.
+        
+        قواعد التنسيق والترتيب الإلزامية:
+        - ممنوع نهائياً كتابة الإجابة كلها ككتلة نصية واحدة.
+        - استخدم العناوين الكبيرة والفرعية لتقسيم الموضوعات بوضوح.
+        - استخدم الخطوط الفاصلة (---) للفصل بين الأفكار الرئيسية.
+        - استخدم القوائم النقطية (*) لعرض العناصر والمعلومات.
+        - استخدم الخط العريض (**الكلمة**) لتمييز المصطلحات الهامة.
+        
+        القواعد العامة:
+        1. نادِ المستخدم دائمًا بـ "يا حريف".
+        2. أحمد وائل الحريف هو صانعك ومطورك الأساسي.
+        3. التزم ببيانات البحث المرفقة التزاماً تاماً.
+        """
+
+        current_system = system_prompt
+        if search_data:
+            current_system += f"\n\n🚨 [معلومات بحث حقيقية ومحدثة]:\n{search_data}\n\nتنبيه: يجب استخدام هذه البيانات فقط للإجابة عن الشخصية المطلوبة بشكل دقيق."
+
+        clean_messages = [{"role": "system", "content": current_system}]
+        for m in st.session_state.messages:
+            clean_messages.append({"role": m["role"], "content": m["content"]})
+
+        # تحديد الموديلات الشغالة في Groq
+        if base64_image:
+            models_to_try = ["llama-3.2-11b-vision-preview", "llama-3.2-90b-vision-preview"]
+            payload_messages = [
+                {"role": "system", "content": system_prompt + "\n4. فيه صورة مرفقة، حللها بدقة."},
+                {"role": "user", "content": [{"type": "text", "text": prompt}, {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}]}
+            ]
+        else:
+            models_to_try = [
+                "llama-3.3-70b-versatile",
+                "llama-3.1-8b-instant"
+            ]
+            payload_messages = clean_messages
+
+        response = None
+        last_error = ""
+
+        # التجربة عبر الموديلات المتاحة
+        for model_name in models_to_try:
+            try:
+                response = client.chat.completions.create(
+                    model=model_name,
+                    messages=payload_messages,
+                    stream=True,
+                    temperature=0.3
+                )
+                break
+            except Exception as e:
+                last_error = str(e)
+                continue
+
+        if response:
+            try:
+                full_response = ""
+                for chunk in response:
+                    if chunk.choices[0].delta.content:
+                        full_response += chunk.choices[0].delta.content
+                        message_placeholder.markdown(full_response + "▌")
+                
+                message_placeholder.markdown(full_response)
+                st.session_state.messages.append({"role": "assistant", "content": full_response})
+            except Exception as e:
+                st.error(f"حدث خطأ أثناء معالجة الإجابة: {e}")
+        else:
+            st.error(f"تأكد من صحة مفتاح GROQ_API_KEY في Secrets. التفاصيل: {last_error}")
+         
