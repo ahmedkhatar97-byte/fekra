@@ -180,40 +180,57 @@ if prompt := st.chat_input("بماذا تفكر يا حريف؟"):
         3. التزم ببيانات البحث المرفقة التزاماً تاماً لتقديم معلومات حقيقية وصحيحة وصادقة عن الشخصيات المشهورة، وممنوع التأليف أو قول كلام عشوائي بدون دليل من السيرش.
         """
 
-        try:
-            if base64_image:
-                model_to_use = "llama-3.2-11b-vision-preview"
-                messages = [
-                    {"role": "system", "content": system_prompt + "\n4. فيه صورة مرفقة، حللها بدقة متناهية، ونظم إجابتك بعناوين ونقاط واضحة، والتزم تماماً بصفر أخطاء إملائية بأسلوب حريف."},
-                    {"role": "user", "content": [{"type": "text", "text": prompt}, {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}]}
-                ]
-            else:
-                model_to_use = "llama3-70b-8192"
-                current_system = system_prompt
-                if search_data:
-                    current_system += f"\n\n🚨 [معلومات بحث حقيقية ومحدثة]:\n{search_data}\n\nتنبيه: يجب استخدام هذه البيانات فقط للإجابة عن الشخصية المطلوبة بشكل دقيق وبدون أي تزييف."
+        # تحديد الموديلات المتاحة بالترتيب
+        if base64_image:
+            models_to_try = ["llama-3.2-11b-vision-preview", "llama-3.2-90b-vision-preview"]
+            payload_messages = [
+                {"role": "system", "content": system_prompt + "\n4. فيه صورة مرفقة، حللها بدقة متناهية، ونظم إجابتك بعناوين ونقاط واضحة، والتزم تماماً بصفر أخطاء إملائية بأسلوب حريف."},
+                {"role": "user", "content": [{"type": "text", "text": prompt}, {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}]}
+            ]
+        else:
+            models_to_try = [
+                "llama-3.3-70b-versatile",
+                "llama-3.1-8b-instant",
+                "mixtral-8x7b-32768"
+            ]
+            current_system = system_prompt
+            if search_data:
+                current_system += f"\n\n🚨 [معلومات بحث حقيقية ومحدثة]:\n{search_data}\n\nتنبيه: يجب استخدام هذه البيانات فقط للإجابة عن الشخصية المطلوبة بشكل دقيق وبدون أي تزييف."
+            
+            clean_messages = [{"role": "system", "content": current_system}]
+            for m in st.session_state.messages:
+                clean_messages.append({"role": m["role"], "content": m["content"]})
+            payload_messages = clean_messages
+
+        response = None
+        last_error = ""
+
+        # تجربة الموديلات تلقائياً لمنع أي توقف
+        for model_name in models_to_try:
+            try:
+                response = client.chat.completions.create(
+                    model=model_name,
+                    messages=payload_messages,
+                    stream=True,
+                    temperature=0.3
+                )
+                break
+            except Exception as e:
+                last_error = str(e)
+                continue
+
+        if response:
+            try:
+                full_response = ""
+                for chunk in response:
+                    if chunk.choices[0].delta.content:
+                        full_response += chunk.choices[0].delta.content
+                        message_placeholder.markdown(full_response + "▌")
                 
-                clean_messages = [{"role": "system", "content": current_system}]
-                for m in st.session_state.messages:
-                    clean_messages.append({"role": m["role"], "content": m["content"]})
-                messages = clean_messages
-
-            response = client.chat.completions.create(
-                model=model_to_use,
-                messages=messages,
-                stream=True,
-                temperature=0.3
-            )
+                message_placeholder.markdown(full_response)
+                st.session_state.messages.append({"role": "assistant", "content": full_response})
+            except Exception as e:
+                st.error(f"حدث خطأ أثناء الاستجابة: {e}")
+        else:
+            st.error(f"تعذر الاتصال بالموديلات: {last_error}")
             
-            full_response = ""
-            for chunk in response:
-                if chunk.choices[0].delta.content:
-                    full_response += chunk.choices[0].delta.content
-                    message_placeholder.markdown(full_response + "▌")
-            
-            message_placeholder.markdown(full_response)
-            st.session_state.messages.append({"role": "assistant", "content": full_response})
-
-        except Exception as e:
-            st.error(f"فيه عطل فني: {e}")
-        
